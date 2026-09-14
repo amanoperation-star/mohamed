@@ -1,0 +1,2044 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منظومة متابعة وتتبع المشاكل والطلبات | Enterprise Issue Tracker Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { 50: '#f0fdf4', 500: '#10b981', 600: '#059669', 700: '#047857' }
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800;900&display=swap">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: 'Cairo', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(156, 163, 175, 0.4); border-radius: 9999px; }
+        @keyframes pulse-red {
+            0%, 100% { background-color: rgba(225, 29, 72, 0.2); }
+            50% { background-color: rgba(225, 29, 72, 0.6); }
+        }
+        .alarm-active { animation: pulse-red 1.5s infinite; }
+        @media print {
+            body * { visibility: hidden; }
+            #printable-report, #printable-report * { visibility: visible; }
+            #printable-report { position: absolute; left: 0; top: 0; width: 100%; }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col transition-colors duration-200">
+
+    <div id="slaAlarmBanner" class="hidden bg-rose-600 text-white px-4 py-2 text-xs font-black flex justify-between items-center shadow-lg border-b border-rose-700 animate-pulse z-50">
+        <div class="flex items-center gap-2">
+            <i class="fa-solid fa-triangle-exclamation text-amber-300 text-lg"></i>
+            <span id="slaAlarmMessage">تنبيه عاجل: توجد تذاكر متأخرة تجاوزت اتفافية مستوى الخدمة (SLA)!</span>
+        </div>
+        <button onclick="switchTab('issues')" class="bg-white text-rose-700 px-3 py-1 rounded-lg hover:bg-rose-100 transition shadow font-bold text-[11px]">
+            عرض التذاكر المتأخرة <i class="fa-solid fa-arrow-left mr-1"></i>
+        </button>
+    </div>
+
+    <div id="fullLoginOverlay" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200 dark:border-slate-700">
+            <div class="bg-gradient-to-r from-indigo-900 via-slate-900 to-indigo-950 text-white p-6 text-center relative">
+                <div class="w-14 h-14 bg-gradient-to-tr from-indigo-600 to-emerald-500 rounded-2xl mx-auto flex items-center justify-center text-2xl font-bold mb-3 shadow-lg shadow-indigo-600/40">
+                    <i class="fa-solid fa-user-shield text-amber-400"></i>
+                </div>
+                <h2 class="font-extrabold text-xl">تسجيل الدخول للنظام</h2>
+                <p class="text-xs text-slate-300 mt-1">منظومة متابعة وتتبع المشاكل والطلبات المؤسسية Pro</p>
+            </div>
+
+            <form id="mainLoginForm" onsubmit="handleMainLogin(event)" class="p-6 space-y-4">
+                <div id="mainLoginErrorMsg" class="hidden bg-rose-50 text-rose-600 p-3 rounded-xl text-xs font-bold border border-rose-200 text-center">
+                    اسم المستخدم أو كلمة المرور غير صحيحة!
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">اسم المستخدم (Username)</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-user absolute right-3 top-3 text-slate-400 text-xs"></i>
+                        <input type="text" id="mainUsername" required placeholder="مثال: admin أو agent1" class="w-full pr-9 pl-3 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">كلمة المرور (Password)</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-lock absolute right-3 top-3 text-slate-400 text-xs"></i>
+                        <input type="password" id="mainPassword" required placeholder="••••••••" class="w-full pr-9 pl-3 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <div class="bg-slate-100 dark:bg-slate-900/70 p-3 rounded-xl border border-slate-200 dark:border-slate-700 text-[11px] space-y-1">
+                    <p class="font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-1"><i class="fa-solid fa-circle-info"></i> الحسابات الافتراضية للتجربة:</p>
+                    <p class="text-slate-600 dark:text-slate-300">• إدمن النظام: <code class="bg-indigo-100 dark:bg-indigo-950 px-1 py-0.5 rounded font-mono text-indigo-600 dark:text-indigo-300">admin</code> / <code class="bg-indigo-100 dark:bg-indigo-950 px-1 py-0.5 rounded font-mono text-indigo-600 dark:text-indigo-300">admin123</code></p>
+                    <p class="text-slate-600 dark:text-slate-300">• موظف الدعم: <code class="bg-indigo-100 dark:bg-indigo-950 px-1 py-0.5 rounded font-mono text-indigo-600 dark:text-indigo-300">agent1</code> / <code class="bg-indigo-100 dark:bg-indigo-950 px-1 py-0.5 rounded font-mono text-indigo-600 dark:text-indigo-300">agent123</code></p>
+                </div>
+
+                <button type="submit" class="w-full py-3 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-extrabold text-xs rounded-xl transition shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-right-to-bracket"></i> تسجيل الدخول
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <header class="bg-slate-900 text-white shadow-xl sticky top-0 z-40 border-b border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-3">
+            <div class="flex items-center space-x-3 space-x-reverse">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-emerald-500 flex items-center justify-center text-white shadow-lg font-black text-xl">
+                    <i class="fa-solid fa-headset"></i>
+                </div>
+                <div>
+                    <h1 class="text-base sm:text-lg font-extrabold leading-tight">منظومة إدارة وتتبع المشاكل والطلبات</h1>
+                    <p class="text-[10px] text-slate-400 font-semibold hidden sm:block">Enterprise Service Desk Pro + CSAT & Supabase Cloud</p>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-1.5 space-x-reverse bg-slate-800/80 p-1.5 rounded-2xl border border-slate-700">
+                <button onclick="switchTab('dashboard')" id="btn-dashboard" class="px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-1.5 bg-indigo-600 text-white shadow-md">
+                    <i class="fa-solid fa-chart-pie text-xs"></i> <span>لوحة التحكم</span>
+                </button>
+                <button onclick="switchTab('issues')" id="btn-issues" class="px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-1.5 text-slate-300 hover:bg-slate-700">
+                    <i class="fa-solid fa-list-check text-xs"></i> <span>سجل المشاكل</span>
+                </button>
+                <button onclick="switchTab('admin')" id="btn-admin" class="px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-1.5 text-slate-300 hover:bg-slate-700">
+                    <i class="fa-solid fa-user-shield text-xs text-amber-400"></i> <span>لوحة الإدمن</span>
+                </button>
+            </div>
+
+            <div class="flex items-center space-x-2 space-x-reverse">
+                <div id="cloudStatusBadge" class="bg-slate-800 border border-slate-700 px-2.5 py-1 rounded-xl flex items-center gap-1 text-[11px] font-bold text-slate-400" title="حالة مزامنة السحابة Supabase">
+                    <i id="cloudStatusIcon" class="fa-solid fa-cloud text-slate-500"></i>
+                    <span id="cloudStatusText" class="hidden md:inline">غير متصل</span>
+                </div>
+
+                <div class="relative">
+                    <button onclick="toggleNotifications()" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 relative transition">
+                        <i class="fa-solid fa-bell text-sm"></i>
+                        <span id="notif-badge" class="hidden absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center animate-bounce">0</span>
+                    </button>
+                    <div id="notif-dropdown" class="hidden absolute left-0 mt-2 w-80 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 p-3 z-50 text-slate-800 dark:text-slate-100 text-xs space-y-2">
+                        <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-700 pb-2">
+                            <span class="font-bold">التنبيهات والإشعارات المباشرة</span>
+                            <button onclick="clearNotifications()" class="text-rose-500 hover:underline text-[10px]">مسح الكل</button>
+                        </div>
+                        <div id="notif-list" class="max-h-60 overflow-y-auto space-y-2 custom-scrollbar">
+                            <p class="text-slate-400 text-center py-4">لا توجد إشعارات جديدة</p>
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="toggleDarkMode()" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 transition" title="تبديل النمط">
+                    <i id="theme-icon" class="fa-solid fa-moon text-sm"></i>
+                </button>
+
+                <div class="bg-slate-800 border border-slate-700 px-3 py-1 rounded-xl flex items-center gap-2">
+                    <div class="w-7 h-7 rounded-lg bg-indigo-500 text-white font-bold flex items-center justify-center text-xs" id="userAvatar">أ</div>
+                    <div class="hidden md:block">
+                        <span id="currentUserDisplay" class="font-bold text-xs block leading-tight">أحمد العتيبي</span>
+                        <span id="currentRoleDisplay" class="text-[10px] text-amber-400 block font-semibold">Admin</span>
+                    </div>
+                    <button onclick="logoutUser()" class="mr-1 text-slate-400 hover:text-rose-400 p-1 rounded hover:bg-slate-700 transition" title="تسجيل الخروج">
+                        <i class="fa-solid fa-right-from-bracket text-xs"></i>
+                    </button>
+                </div>
+
+                <button onclick="openIssueModal()" class="px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-emerald-600 hover:bg-emerald-500 text-white transition shadow-lg shadow-emerald-600/20 flex items-center gap-1.5">
+                    <i class="fa-solid fa-plus"></i> <span class="hidden sm:inline">إضافة مشكلة</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 py-6 flex-grow w-full space-y-6">
+
+        <div id="view-dashboard" class="space-y-6">
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                    <div>
+                        <p class="text-[11px] font-bold text-slate-500 dark:text-slate-400">إجمالي المشاكل</p>
+                        <h2 id="kpi-total" class="text-2xl sm:text-3xl font-extrabold text-slate-800 dark:text-slate-100 mt-0.5">0</h2>
+                    </div>
+                    <div class="w-10 h-10 bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 rounded-xl flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-folder-open"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                    <div>
+                        <p class="text-[11px] font-bold text-slate-500 dark:text-slate-400">مفتوحة (Open) 🔴</p>
+                        <h2 id="kpi-open" class="text-2xl sm:text-3xl font-extrabold text-rose-600 dark:text-rose-400 mt-0.5">0</h2>
+                    </div>
+                    <div class="w-10 h-10 bg-rose-50 dark:bg-rose-950 text-rose-600 dark:text-rose-400 rounded-xl flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-circle-exclamation"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                    <div>
+                        <p class="text-[11px] font-bold text-slate-500 dark:text-slate-400">معلقة (Pending) 🟠</p>
+                        <h2 id="kpi-pending" class="text-2xl sm:text-3xl font-extrabold text-amber-600 dark:text-amber-400 mt-0.5">0</h2>
+                    </div>
+                    <div class="w-10 h-10 bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400 rounded-xl flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-hourglass-half"></i>
+                    </div>
+                </div>
+
+                <div class="bg-rose-50 dark:bg-rose-950/40 p-4 rounded-2xl shadow-sm border border-rose-200 dark:border-rose-900 flex items-center justify-between">
+                    <div>
+                        <p class="text-[11px] font-bold text-rose-600 dark:text-rose-400">تجاوزت الـ SLA ⚠️</p>
+                        <h2 id="kpi-sla-breach" class="text-2xl sm:text-3xl font-extrabold text-rose-700 dark:text-rose-300 mt-0.5">0</h2>
+                    </div>
+                    <div class="w-10 h-10 bg-rose-100 dark:bg-rose-900/60 text-rose-600 dark:text-rose-300 rounded-xl flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-bell-concierge"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-amber-200 dark:border-amber-900/40 flex flex-wrap items-center justify-between gap-4">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-amber-500 text-white rounded-2xl flex items-center justify-center text-2xl shadow-lg shadow-amber-500/30">
+                        <i class="fa-solid fa-face-smile"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-extrabold text-slate-800 dark:text-slate-100">مؤشر رضا العملاء العام (CSAT Score)</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">متوسط تقييم جودة الخدمة والدعم الفني بناءً على التذاكر المغلقة</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3 bg-amber-50 dark:bg-amber-950/60 px-5 py-2.5 rounded-2xl border border-amber-200 dark:border-amber-800">
+                    <h2 id="kpi-csat" class="text-3xl font-black text-amber-500">4.8</h2>
+                    <div class="text-amber-400 text-lg flex items-center gap-1">
+                        <i class="fa-solid fa-star"></i>
+                        <span class="text-xs font-bold text-amber-600 dark:text-amber-400">/ 5.0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
+                    <h3 class="font-bold text-slate-800 dark:text-slate-100 mb-4 flex items-center text-sm">
+                        <i class="fa-solid fa-chart-pie ml-2 text-indigo-500"></i> توزيع المشاكل حسب الحالة
+                    </h3>
+                    <div class="h-56 flex justify-center items-center">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
+                    <h3 class="font-bold text-slate-800 dark:text-slate-100 mb-4 flex items-center text-sm">
+                        <i class="fa-solid fa-chart-column ml-2 text-emerald-500"></i> توزيع المشاكل حسب الأولوية
+                    </h3>
+                    <div class="h-56 flex justify-center items-center">
+                        <canvas id="priorityChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 md:col-span-2 lg:col-span-1">
+                    <h3 class="font-bold text-slate-800 dark:text-slate-100 mb-4 flex items-center text-sm">
+                        <i class="fa-solid fa-layer-group ml-2 text-amber-500"></i> توزيع المشاكل حسب القسم
+                    </h3>
+                    <div class="h-56 flex justify-center items-center">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-issues" class="hidden space-y-4">
+            <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 flex flex-wrap gap-3 items-center justify-between">
+                <div class="flex-1 min-w-[240px] relative">
+                    <i class="fa-solid fa-magnifying-glass absolute right-3.5 top-3 text-slate-400 text-xs"></i>
+                    <input type="text" id="searchInput" oninput="renderIssues()" placeholder="بحث باسم العميل، الكود، الوسم (Tag)، أو المسؤول..." class="w-full pr-9 pl-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+
+                <div class="flex flex-wrap gap-2 items-center">
+                    <select id="filterTag" onchange="renderIssues()" class="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="ALL">جميع الوسوم (Tags)</option>
+                        <option value="VIP Client">VIP Client</option>
+                        <option value="Hardware">Hardware</option>
+                        <option value="Software">Software</option>
+                        <option value="Bug">Bug</option>
+                        <option value="Network">Network</option>
+                    </select>
+
+                    <select id="filterStatus" onchange="renderIssues()" class="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="ALL">جميع الحالات</option>
+                        <option value="Open">🔴 Open (مفتوحة)</option>
+                        <option value="Pending">🟠 Pending (معلقة)</option>
+                        <option value="Resolved">🟢 Resolved (تم الحل)</option>
+                        <option value="Closed">⚪ Closed (مغلقة)</option>
+                        <option value="Breached">⚠️ تجاوزت الـ SLA</option>
+                    </select>
+
+                    <select id="filterPriority" onchange="renderIssues()" class="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="ALL">جميع الأولويات</option>
+                        <option value="🔴 Critical">🔴 Critical (حرج)</option>
+                        <option value="🟠 High">🟠 High (عالي)</option>
+                        <option value="🟡 Medium">🟡 Medium (متوسط)</option>
+                        <option value="🟢 Low">🟢 Low (منخفض)</option>
+                    </select>
+
+                    <button onclick="exportDataCSV()" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition shadow flex items-center gap-1.5" title="سحب تقرير اكسيل سريع">
+                        <i class="fa-solid fa-file-excel"></i> <span>سحب تقرير CSV</span>
+                    </button>
+
+                    <div id="bulkActionsWrapper" class="hidden flex items-center gap-2 bg-indigo-50 dark:bg-indigo-950/60 p-1 rounded-xl border border-indigo-200 dark:border-indigo-800">
+                        <span id="selectedCount" class="text-xs font-bold text-indigo-700 dark:text-indigo-300 px-2">0 محدد</span>
+                        <button onclick="bulkChangeStatus('Resolved')" class="px-2.5 py-1 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-700">تحويل المحدد إلى Resolved 🟢</button>
+                        <button onclick="bulkDelete()" class="px-2.5 py-1 bg-rose-600 text-white rounded-lg text-xs font-bold hover:bg-rose-700" id="bulkDeleteBtn">حذف المحدد</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-right text-xs sm:text-sm">
+                        <thead class="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-bold">
+                            <tr>
+                                <th class="p-3 w-8 text-center">
+                                    <input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)" class="rounded text-indigo-600 focus:ring-indigo-500">
+                                </th>
+                                <th class="p-3">الكود</th>
+                                <th class="p-3">العميل / الوسم</th>
+                                <th class="p-3">نوع المشكلة</th>
+                                <th class="p-3">وصف المشكلة</th>
+                                <th class="p-3">المُرسَل إليه</th>
+                                <th class="p-3">معلقة عند مَن؟</th>
+                                <th class="p-3">وقت العمل</th>
+                                <th class="p-3">الأولوية</th>
+                                <th class="p-3">الحالة</th>
+                                <th class="p-3">الموعد (SLA)</th>
+                                <th class="p-3 text-center">إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="issuesTableBody" class="divide-y divide-slate-100 dark:divide-slate-700">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-admin" class="hidden space-y-6">
+            <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-6 rounded-3xl border border-indigo-900/50 shadow-xl flex flex-wrap justify-between items-center gap-4">
+                <div>
+                    <span class="bg-amber-500/20 text-amber-300 border border-amber-500/30 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider mb-2 inline-block">
+                        <i class="fa-solid fa-shield-halved ml-1"></i> منطقة الإدارة الكاملة (Admin Zone)
+                    </span>
+                    <h2 class="text-xl font-black">لوحة التحكم وإدارة الحسابات وربط السحابة Supabase</h2>
+                    <p class="text-xs text-slate-300 mt-1">تتيح لك إدارة الحسابات، ضبط إعدادات Supabase، التعيين التلقائي ومتابعة تقييمات (CSAT).</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="exportDataJSON()" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition shadow">
+                        <i class="fa-solid fa-download ml-1"></i> تصدير النسخة (JSON)
+                    </button>
+                    <button onclick="exportDataCSV()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition shadow">
+                        <i class="fa-solid fa-file-excel ml-1"></i> سحب تقرير الشامل (CSV)
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex border-b border-slate-200 dark:border-slate-700 space-x-4 space-x-reverse text-xs font-bold">
+                <button onclick="switchAdminSubTab('users')" id="subtab-btn-users" class="pb-3 border-b-2 border-indigo-600 text-indigo-600 dark:text-indigo-400">
+                    <i class="fa-solid fa-users ml-1"></i> إدارة الحسابات
+                </button>
+                <button onclick="switchAdminSubTab('reports')" id="subtab-btn-reports" class="pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200">
+                    <i class="fa-solid fa-file-invoice ml-1 text-emerald-400"></i> قسم التقارير المتقدمة
+                </button>
+                <button onclick="switchAdminSubTab('categories')" id="subtab-btn-categories" class="pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200">
+                    <i class="fa-solid fa-tags ml-1"></i> الأقسام والتوجيه الآلي و SLA
+                </button>
+                <button onclick="switchAdminSubTab('supabase')" id="subtab-btn-supabase" class="pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200">
+                    <i class="fa-solid fa-cloud ml-1 text-emerald-400"></i> مزامنة Supabase Cloud
+                </button>
+                <button onclick="switchAdminSubTab('csat')" id="subtab-btn-csat" class="pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200">
+                    <i class="fa-solid fa-star ml-1 text-amber-400"></i> تقييمات رضا العملاء (CSAT)
+                </button>
+                <button onclick="switchAdminSubTab('audit')" id="subtab-btn-audit" class="pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200">
+                    <i class="fa-solid fa-history ml-1"></i> سجل النشاطات (Audit Logs)
+                </button>
+            </div>
+
+            <div id="admin-users" class="space-y-4">
+                <div class="flex justify-between items-center">
+                    <h3 class="font-bold text-slate-800 dark:text-slate-100 text-sm">الحسابات المسجلة للوصول إلى النظام</h3>
+                    <button onclick="openUserModal()" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition shadow flex items-center gap-1">
+                        <i class="fa-solid fa-user-plus"></i> إنشاء حساب مستخدم جديد
+                    </button>
+                </div>
+
+                <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                    <table class="w-full text-right text-xs sm:text-sm">
+                        <thead class="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-bold">
+                            <tr>
+                                <th class="p-3">الاسم الكامل</th>
+                                <th class="p-3">اسم المستخدم</th>
+                                <th class="p-3">كلمة المرور</th>
+                                <th class="p-3">البريد الإلكتروني</th>
+                                <th class="p-3">الدور</th>
+                                <th class="p-3 text-center">إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody" class="divide-y divide-slate-100 dark:divide-slate-700"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="admin-reports" class="hidden space-y-4">
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-4">
+                    <h3 class="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-line text-emerald-500"></i> مركز توليد وسحب التقارير الإدارية
+                    </h3>
+                    <p class="text-xs text-slate-500">يمكنك سحب تقارير شاملة عن أداء الدعم الفني، التذاكر المتأخرة، وإحصائيات أوقات العمل بصيغ مختلفة لفتحها مباشرة عبر إكسيل.</p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                        <div class="bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-700 flex flex-col justify-between space-y-3">
+                            <div>
+                                <h4 class="font-bold text-xs text-indigo-600 dark:text-indigo-400">📊 تقرير التذاكر الشامل (CSV)</h4>
+                                <p class="text-[11px] text-slate-500 mt-1">يحتوي على كافة تفاصيل التذاكر، الحالات، الوقت المستغرق لكل عميل، ومواعيد SLA.</p>
+                            </div>
+                            <button onclick="exportDataCSV()" class="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition shadow flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-file-excel"></i> <span>سحب التقرير الشامل (CSV)</span>
+                            </button>
+                        </div>
+
+                        <div class="bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-700 flex flex-col justify-between space-y-3">
+                            <div>
+                                <h4 class="font-bold text-xs text-rose-600 dark:text-rose-400">⚠️ تقرير التذاكر المتأخرة (SLA Breached)</h4>
+                                <p class="text-[11px] text-slate-500 mt-1">تصفية واستخرج تقرير مباشر بالتذاكر التي تجاوزت الوقت المحدد للحل فقط.</p>
+                            </div>
+                            <button onclick="exportSlaBreachedReport()" class="w-full py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-bold transition shadow flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-file-circle-exclamation"></i> <span>سحب تقرير المتأخرات</span>
+                            </button>
+                        </div>
+
+                        <div class="bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-700 flex flex-col justify-between space-y-3">
+                            <div>
+                                <h4 class="font-bold text-xs text-amber-500">💾 نسخة احتياطية كاملة (JSON)</h4>
+                                <p class="text-[11px] text-slate-500 mt-1">تصدير جميع السجلات والتعليقات والبيانات بصيغة JSON لاستعادتها لاحقاً.</p>
+                            </div>
+                            <button onclick="exportDataJSON()" class="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition shadow flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-download"></i> <span>سحب نسخة احتياطية</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="admin-categories" class="hidden space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-3">
+                        <h4 class="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center justify-between">
+                            <span><i class="fa-solid fa-robot ml-1 text-indigo-500"></i> أقسام وقواعد التوجيه والتعيين التلقائي</span>
+                        </h4>
+                        <div class="space-y-2 text-xs">
+                            <input type="text" id="newCategoryInput" placeholder="اسم القسم الجديد..." class="w-full border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-1.5 bg-slate-50 dark:bg-slate-900">
+                            <input type="text" id="newCatAssignInput" placeholder="الفريق/القسم التلقائي..." class="w-full border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-1.5 bg-slate-50 dark:bg-slate-900">
+                            <input type="text" id="newCatOwnerInput" placeholder="المسؤول المباشر التلقائي..." class="w-full border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-1.5 bg-slate-50 dark:bg-slate-900">
+                            <button onclick="addCategory()" class="w-full py-2 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700">إضافة مع التوجيه الآلي</button>
+                        </div>
+                        <ul id="categoriesList" class="divide-y divide-slate-100 dark:divide-slate-700 text-xs font-semibold"></ul>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-3">
+                        <h4 class="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-1">
+                            <i class="fa-solid fa-clock ml-1 text-amber-500"></i> قواعد مواعيد SLA (بالساعات)
+                        </h4>
+                        <div class="space-y-2 text-xs">
+                            <div class="flex items-center justify-between">
+                                <span>🔴 Critical (حرج)</span>
+                                <input type="number" id="slaCritical" value="4" class="w-20 border border-slate-300 dark:border-slate-600 rounded-lg p-1 text-center bg-slate-50 dark:bg-slate-900 font-mono">
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span>🟠 High (عالي)</span>
+                                <input type="number" id="slaHigh" value="12" class="w-20 border border-slate-300 dark:border-slate-600 rounded-lg p-1 text-center bg-slate-50 dark:bg-slate-900 font-mono">
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span>🟡 Medium (متوسط)</span>
+                                <input type="number" id="slaMedium" value="24" class="w-20 border border-slate-300 dark:border-slate-600 rounded-lg p-1 text-center bg-slate-50 dark:bg-slate-900 font-mono">
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span>🟢 Low (منخفض)</span>
+                                <input type="number" id="slaLow" value="48" class="w-20 border border-slate-300 dark:border-slate-600 rounded-lg p-1 text-center bg-slate-50 dark:bg-slate-900 font-mono">
+                            </div>
+                            <button onclick="saveSlaRules()" class="w-full mt-2 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition">حفظ قواعد SLA</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="admin-supabase" class="hidden space-y-4">
+                <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 space-y-4 max-w-2xl">
+                    <h4 class="font-bold text-base text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                        <i class="fa-solid fa-cloud text-emerald-500"></i> إعدادات الربط مع قاعدة بيانات Supabase
+                    </h4>
+                    <p class="text-xs text-slate-500 leading-relaxed">أدخل بيانات المشروع الخاص بك من لوحة التحكم في Supabase لتمكين المزامنة الفورية السحابية لجميع التذاكر والمستخدمين عبر الأجهزة المختلفة.</p>
+                    
+                    <div class="space-y-3 text-xs">
+                        <div>
+                            <label class="block font-bold mb-1">Project URL</label>
+                            <input type="text" id="supabaseUrlInput" placeholder="https://xyzcompany.supabase.co" class="w-full border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2 bg-slate-50 dark:bg-slate-900 font-mono">
+                        </div>
+                        <div>
+                            <label class="block font-bold mb-1">Anon Public Key</label>
+                            <input type="password" id="supabaseKeyInput" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." class="w-full border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2 bg-slate-50 dark:bg-slate-900 font-mono">
+                        </div>
+                        <div class="flex items-center gap-2 pt-2">
+                            <button onclick="saveSupabaseConfig()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold shadow transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-plug"></i> حفظ والاتصال بالسحابة
+                            </button>
+                            <button onclick="fetchFromSupabaseCloud()" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-rotate"></i> جلب البيانات الآن
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="admin-csat" class="hidden space-y-4">
+                <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200 dark:border-slate-700 space-y-4">
+                    <h4 class="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                        <i class="fa-solid fa-star text-amber-400 text-base"></i> تقييمات رضا العملاء للمشاكل المغلقة
+                    </h4>
+                    <div id="csatList" class="space-y-3"></div>
+                </div>
+            </div>
+
+            <div id="admin-audit" class="hidden space-y-4">
+                <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-4">
+                    <h4 class="font-bold text-xs text-slate-600 dark:text-slate-300 mb-3 flex items-center justify-between">
+                        <span>سجل الأحداث والعمليات بالمنظومة (Audit Trail)</span>
+                        <button onclick="clearAuditLogs()" class="text-rose-500 hover:underline text-[11px]">مسح السجل</button>
+                    </h4>
+                    <div class="max-h-96 overflow-y-auto custom-scrollbar">
+                        <table class="w-full text-right text-xs">
+                            <thead class="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 font-bold text-slate-500">
+                                <tr>
+                                    <th class="p-2">الوقت والتاريخ</th>
+                                    <th class="p-2">المستخدم</th>
+                                    <th class="p-2">نوع الحدث</th>
+                                    <th class="p-2">تفاصيل العملية</th>
+                                </tr>
+                            </thead>
+                            <tbody id="auditLogsBody" class="divide-y divide-slate-100 dark:divide-slate-700"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="issueModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4 overflow-y-auto">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden border border-slate-200 dark:border-slate-700 my-8">
+            <div class="bg-slate-900 text-white px-6 py-4 flex justify-between items-center border-b border-slate-800">
+                <h3 id="modalTitle" class="font-black text-base flex items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square text-indigo-400"></i> إضافة مشكلة جديدة
+                </h3>
+                <button onclick="closeIssueModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-times text-lg"></i></button>
+            </div>
+
+            <form id="issueForm" onsubmit="saveIssue(event)" class="p-6 space-y-4">
+                <input type="hidden" id="issueIndex">
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">اسم العميل / الجهة</label>
+                        <input type="text" id="clientName" required placeholder="مثال: شركة الأمل لتقنية المعلومات" class="w-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 rounded-xl px-3 py-2 text-xs font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">الوسم (Tag)</label>
+                        <select id="issueTag" class="w-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 rounded-xl px-3 py-2 text-xs font-semibold focus:ring-2 focus:ring-indigo-500">
+                            <option value="VIP Client">VIP Client</option>
+                            <option value="Hardware">Hardware</option>
+                            <option value="Software" selected>Software</option>
+                            <option value="Bug">Bug</option>
+                            <option value="Network">Network</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">نوع المشكلة / القسم (توجيه آلي)</label>
+                    <select id="issueType" onchange="autoRouteAssignee()" required class="w-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 rounded-xl px-3 py-2 text-xs font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">وصف المشكلة بالتفصيل</label>
+                    <textarea id="issueDesc" rows="3" required placeholder="اكتب ملخص وفحوى المشكلة أو البلاغ..." class="w-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 rounded-xl px-3 py-2 text-xs font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">📎 مرفق/صورة للمشكلة</label>
+                    <input type="file" id="issueAttachment" onchange="handleFileUpload(event, 'ticket')" accept="image/*,.pdf,.doc,.docx" class="w-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 rounded-xl px-3 py-1.5 text-xs">
+                    <div id="attachmentPreview" class="mt-2 hidden"></div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">تم إرسالها إلى (تلقائي)</label>
+                        <input type="text" id="assignedTo" required class="w-full border border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-950 rounded-xl px-3 py-2 text-xs font-semibold">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">معلقة عند مَن الآن؟ (تلقائي/قابل للتعديل)</label>
+                        <input type="text" id="currentOwner" required class="w-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 rounded-xl px-3 py-2 text-xs font-semibold">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">الأولوية (Priority)</label>
+                        <select id="priority" class="w-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 rounded-xl px-3 py-2 text-xs font-semibold focus:ring-2 focus:ring-indigo-500">
+                            <option value="🔴 Critical">🔴 Critical (حرج)</option>
+                            <option value="🟠 High">🟠 High (عالي)</option>
+                            <option value="🟡 Medium" selected>🟡 Medium (متوسط)</option>
+                            <option value="🟢 Low">🟢 Low (منخفض)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">الحالة (Status)</label>
+                        <select id="status" class="w-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 rounded-xl px-3 py-2 text-xs font-semibold focus:ring-2 focus:ring-indigo-500">
+                            <option value="Open">🔴 Open (مفتوحة)</option>
+                            <option value="Pending">🟠 Pending (معلقة)</option>
+                            <option value="Resolved">🟢 Resolved (تم الحل)</option>
+                            <option value="Closed">⚪ Closed (مغلقة)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">تاريخ الإرسال</label>
+                        <input type="date" id="dateSent" required class="w-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 rounded-xl px-3 py-2 text-xs font-semibold">
+                    </div>
+                </div>
+
+                <div class="pt-3 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-2">
+                    <button type="button" onclick="closeIssueModal()" class="px-4 py-2 border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 rounded-xl text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-700">إلغاء</button>
+                    <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition shadow-lg">حفظ المشكلة</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="detailsModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4 overflow-y-auto">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-3xl overflow-hidden border border-slate-200 dark:border-slate-700 my-8">
+            <div class="bg-slate-900 text-white px-6 py-4 flex justify-between items-center border-b border-slate-800">
+                <div class="flex items-center gap-2">
+                    <span id="detailId" class="bg-indigo-600 text-white px-2 py-0.5 rounded text-[10px] font-mono font-bold">INC-1001</span>
+                    <h3 id="detailClient" class="font-extrabold text-base">اسم العميل</h3>
+                    <span id="detailTag" class="bg-slate-800 border border-slate-700 text-amber-400 px-2 py-0.5 rounded-full text-[10px] font-bold">Tag</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="printPDFReport()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 rounded-xl text-xs font-bold transition flex items-center gap-1">
+                        <i class="fa-solid fa-print"></i> <span>تصدير/طباعة PDF</span>
+                    </button>
+                    <button onclick="closeDetailsModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-times text-lg"></i></button>
+                </div>
+            </div>
+
+            <div class="p-6 space-y-6" id="printable-report">
+                <div class="bg-slate-900 text-white p-4 rounded-2xl flex flex-wrap items-center justify-between gap-3 shadow-inner">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-bold">
+                            <i class="fa-solid fa-stopwatch"></i>
+                        </div>
+                        <div>
+                            <span class="text-[10px] text-slate-400 font-bold block">⏱️ عداد الوقت المستغرق (يعمل تلقائياً عند الفتح)</span>
+                            <span id="timerDisplay" class="font-mono font-extrabold text-lg text-emerald-400">00:00:00</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button id="btnStartTimer" onclick="startWorkTimer()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition hidden">استئناف العمل</button>
+                        <button id="btnStopTimer" onclick="stopWorkTimer()" class="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-bold transition">إيقاف مؤقت والتأكيد</button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 text-xs">
+                    <div>
+                        <span class="text-slate-400 block font-semibold">نوع المشكلة</span>
+                        <span id="detailType" class="font-bold text-slate-800 dark:text-slate-200">-</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 block font-semibold">الأولوية</span>
+                        <span id="detailPriority" class="font-bold">-</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 block font-semibold">الحالة الحالية</span>
+                        <span id="detailStatus" class="font-bold">-</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 block font-semibold">معلقة عند</span>
+                        <span id="detailOwner" class="font-bold text-amber-500">-</span>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-xs text-slate-500 dark:text-slate-400 mb-1">تفاصيل المشكلة والوصف:</h4>
+                    <p id="detailDesc" class="bg-slate-50 dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-700 text-xs leading-relaxed font-semibold">-</p>
+                    <div id="detailAttachmentContainer" class="mt-2 hidden"></div>
+                </div>
+
+                <div class="bg-amber-50 dark:bg-amber-950/30 p-3 rounded-2xl border border-amber-200 dark:border-amber-900/40 flex items-center justify-between">
+                    <div>
+                        <span class="font-bold text-xs text-amber-900 dark:text-amber-200 block">⭐ تقييم رضا العميل (CSAT)</span>
+                        <span class="text-[10px] text-amber-700 dark:text-amber-400">حدد تقييم الخدمة عند إغلاق التذكرة</span>
+                    </div>
+                    <div class="flex items-center gap-1 text-lg cursor-pointer" id="csatStars">
+                        <i class="fa-regular fa-star text-amber-400" onclick="setCsatRating(1)"></i>
+                        <i class="fa-regular fa-star text-amber-400" onclick="setCsatRating(2)"></i>
+                        <i class="fa-regular fa-star text-amber-400" onclick="setCsatRating(3)"></i>
+                        <i class="fa-regular fa-star text-amber-400" onclick="setCsatRating(4)"></i>
+                        <i class="fa-regular fa-star text-amber-400" onclick="setCsatRating(5)"></i>
+                    </div>
+                </div>
+
+                <div class="border-t border-slate-200 dark:border-slate-700 pt-4 space-y-3">
+                    <h4 class="font-bold text-xs text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+                        <i class="fa-solid fa-comments text-indigo-500"></i> سجل التعليقات والملاحظات والملفات المرفقة
+                    </h4>
+
+                    <div id="commentsList" class="space-y-2 max-h-48 overflow-y-auto custom-scrollbar p-1"></div>
+
+                    <div class="space-y-2">
+                        <div class="flex gap-2">
+                            <input type="text" id="newCommentInput" placeholder="أضف تعليقاً أو تحديثاً جديداً..." class="flex-1 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                            <button onclick="addComment()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition">إرسال</button>
+                        </div>
+                        <input type="file" id="commentAttachment" onchange="handleFileUpload(event, 'comment')" accept="image/*,.pdf" class="text-[10px] text-slate-400">
+                        <div id="commentFilePreview" class="hidden text-[10px] text-emerald-500 font-bold"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="userModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200 dark:border-slate-700">
+            <div class="bg-slate-900 text-white px-6 py-4 flex justify-between items-center border-b border-slate-800">
+                <h3 id="userModalTitle" class="font-bold text-sm">إنشاء حساب مستخدم جديد</h3>
+                <button onclick="closeUserModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <form id="userForm" onsubmit="saveUser(event)" class="p-6 space-y-3">
+                <input type="hidden" id="userEditIndex">
+                <div>
+                    <label class="block text-xs font-bold mb-1">الاسم الكامل</label>
+                    <input type="text" id="addUserName" required placeholder="مثال: خالد محمود" class="w-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 rounded-xl p-2 text-xs">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold mb-1">اسم المستخدم للدخول (Username)</label>
+                    <input type="text" id="addUserUsername" required placeholder="مثال: agent2" class="w-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 rounded-xl p-2 text-xs font-mono">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold mb-1">كلمة المرور للدخول (Password)</label>
+                    <input type="text" id="addUserPassword" required placeholder="مثال: pass123" class="w-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 rounded-xl p-2 text-xs font-mono">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold mb-1">البريد الإلكتروني</label>
+                    <input type="email" id="addUserEmail" required placeholder="name@company.com" class="w-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 rounded-xl p-2 text-xs">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold mb-1">الدور والصلاحيات (Role)</label>
+                    <select id="addUserRole" class="w-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 rounded-xl p-2 text-xs font-bold">
+                        <option value="Agent" selected>Agent (موظف متابعة ودعم)</option>
+                        <option value="Admin">Admin (مدير كامل - له كافة الصلاحيات)</option>
+                    </select>
+                </div>
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeUserModal()" class="px-3 py-1.5 border border-slate-300 dark:border-slate-600 rounded-xl text-xs font-bold">إلغاء</button>
+                    <button type="submit" class="px-4 py-1.5 bg-indigo-600 text-white font-bold rounded-xl text-xs">حفظ الحساب</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <audio id="notifSound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
+    <audio id="alarmSound" src="https://assets.mixkit.co/active_storage/sfx/995/995-preview.mp3" preload="auto" loop></audio>
+
+    <script>
+        const STORAGE_KEY = 'ENTERPRISE_ISSUE_TRACKER_V6_SUPABASE';
+
+        let supabaseConfig = { url: '', key: '' };
+        let supabaseClient = null;
+
+        let defaultSlaRules = { Critical: 4, High: 12, Medium: 24, Low: 48 };
+
+        let users = [
+            { name: "أحمد العتيبي (مدير النظام)", email: "admin@company.com", role: "Admin", username: "admin", password: "admin123" },
+            { name: "محمد علي (موظف دعم)", email: "agent@company.com", role: "Agent", username: "agent1", password: "agent123" }
+        ];
+
+        let currentUser = null;
+
+        let categories = [
+            { name: "تقني / Technical", assigned: "فريق الدعم البرمجي", owner: "أحمد محمود (مهندس النظم)" },
+            { name: "مالي / Financial", assigned: "الإدارة المالية", owner: "محمد علي (الحسابات)" },
+            { name: "خدمة عملاء / Customer Service", assigned: "قسم اللوجستيات", owner: "سارة خالد" },
+            { name: "تشغيلي / Operations", assigned: "إدارة التشغيل", owner: "إدارة التشغيل" }
+        ];
+
+        let notifications = [];
+
+        let auditLogs = [
+            { time: new Date().toLocaleString('ar-EG'), user: "System", action: "تشغيل المنظومة المحدثة", details: "تم تحميل النسخة المتطورة + مزامنة Supabase" }
+        ];
+
+        let tempTicketAttachment = null;
+        let tempCommentAttachment = null;
+        let timerInterval = null;
+        let timerSeconds = 0;
+
+        let globalLiveTimerInterval = null;
+
+        let issues = [
+            {
+                id: "INC-1001",
+                client: "شركة الأمل للتجارة والتوزيع",
+                tag: "VIP Client",
+                type: "تقني / Technical",
+                desc: "عطل مفاجئ في بوابة تسديد الفواتير الإلكترونية لجميع الفروع",
+                assigned: "فريق الدعم البرمجي",
+                owner: "أحمد محمود (مهندس النظم)",
+                priority: "🔴 Critical",
+                status: "Open",
+                date: "2026-09-10",
+                workTime: 3600,
+                csat: 5,
+                attachment: null,
+                comments: [
+                    { user: "أحمد العتيبي", text: "تم رفع التقرير للقسم الفني وجاري الفحص العاجل", time: "10:15 AM", attachment: null }
+                ]
+            },
+            {
+                id: "INC-1002",
+                client: "مجموعة الخليج الاستثمارية",
+                tag: "Software",
+                type: "مالي / Financial",
+                desc: "خطأ في مطابقة التسويات المالية للربع الثالث وتأخر التحويلات",
+                assigned: "الإدارة المالية",
+                owner: "محمد علي (الحسابات)",
+                priority: "🟠 High",
+                status: "Pending",
+                date: "2026-09-13",
+                workTime: 1800,
+                csat: 4,
+                attachment: null,
+                comments: []
+            }
+        ];
+
+        let statusChartInstance = null;
+        let priorityChartInstance = null;
+        let categoryChartInstance = null;
+        let activeDetailIndex = null;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            loadFromLocalStorage();
+            initSupabase();
+            populateCategoryDropdowns();
+            checkSession();
+            checkSlaExceededNotifications();
+            setInterval(checkSlaExceededNotifications, 30000);
+            startGlobalLiveTimer();
+        });
+
+        function startGlobalLiveTimer() {
+            if (globalLiveTimerInterval) clearInterval(globalLiveTimerInterval);
+            globalLiveTimerInterval = setInterval(() => {
+                let updated = false;
+                issues.forEach(item => {
+                    if (item.status !== 'Resolved' && item.status !== 'Closed') {
+                        item.workTime = (item.workTime || 0) + 1;
+                        updated = true;
+                    }
+                });
+                
+                if (activeDetailIndex !== null && issues[activeDetailIndex]) {
+                    if (issues[activeDetailIndex].status !== 'Resolved' && issues[activeDetailIndex].status !== 'Closed') {
+                        timerSeconds = issues[activeDetailIndex].workTime;
+                        const timerDisplay = document.getElementById('timerDisplay');
+                        if (timerDisplay) timerDisplay.innerText = formatSecondsToHMS(timerSeconds);
+                    }
+                }
+
+                if (updated) {
+                    const issuesTab = document.getElementById('view-issues');
+                    if (issuesTab && !issuesTab.classList.contains('hidden')) {
+                        updateLiveWorkTimesUI();
+                    }
+                }
+            }, 1000);
+        }
+
+        function updateLiveWorkTimesUI() {
+            const tbody = document.getElementById('issuesTableBody');
+            if (!tbody) return;
+            const rows = tbody.querySelectorAll('tr');
+            rows.forEach(row => {
+                const idCell = row.querySelector('td:nth-child(2)');
+                if (idCell) {
+                    const issueId = idCell.innerText.trim();
+                    const item = issues.find(i => i.id === issueId);
+                    if (item) {
+                        const timeCell = row.querySelector('td:nth-child(8)');
+                        if (timeCell) {
+                            timeCell.innerHTML = `<i class="fa-solid fa-clock ml-1 text-[10px]"></i>${formatSecondsToHMS(item.workTime)}`;
+                        }
+                    }
+                }
+            });
+        }
+
+        function saveToLocalStorage() {
+            const payload = { issues, users, categories, auditLogs, notifications, slaRules: defaultSlaRules, currentUser, supabaseConfig };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+            syncToSupabaseCloud();
+        }
+
+        function loadFromLocalStorage() {
+            const data = localStorage.getItem(STORAGE_KEY);
+            if (data) {
+                try {
+                    const parsed = JSON.parse(data);
+                    if (parsed.issues) issues = parsed.issues;
+                    if (parsed.users) users = parsed.users;
+                    if (parsed.categories) categories = parsed.categories;
+                    if (parsed.auditLogs) auditLogs = parsed.auditLogs;
+                    if (parsed.notifications) notifications = parsed.notifications;
+                    if (parsed.slaRules) defaultSlaRules = parsed.slaRules;
+                    if (parsed.currentUser) currentUser = parsed.currentUser;
+                    if (parsed.supabaseConfig) supabaseConfig = parsed.supabaseConfig;
+                } catch(e) { console.error("LocalStorage parse error", e); }
+            }
+        }
+
+        function exportDataJSON() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(issues, null, 2));
+            const dlAnchor = document.createElement('a');
+            dlAnchor.setAttribute("href", dataStr);
+            dlAnchor.setAttribute("download", `Tickets_Backup_${new Date().toISOString().slice(0,10)}.json`);
+            document.body.appendChild(dlAnchor);
+            dlAnchor.click();
+            dlAnchor.remove();
+            logAuditAction("تصدير تقرير", "تم سحب النسخة الاحتياطية بصيغة JSON");
+        }
+
+        function exportDataCSV() {
+            if (issues.length === 0) {
+                alert("لا توجد بيانات لتصديرها!");
+                return;
+            }
+
+            let csvContent = "\uFEFF"; 
+            csvContent += "كود المشكلة,اسم العميل,الوسم,نوع المشكلة,الوصف,المستلم,المسؤول الحالي,الأولوية,الحالة,الوقت المستغرق (ثواني),تقييم CSAT,تاريخ الإرسال\n";
+
+            issues.forEach(item => {
+                const row = [
+                    `"${item.id}"`,
+                    `"${item.client.replace(/"/g, '""')}"`,
+                    `"${(item.tag || '').replace(/"/g, '""')}"`,
+                    `"${item.type.replace(/"/g, '""')}"`,
+                    `"${item.desc.replace(/"/g, '""')}"`,
+                    `"${item.assigned.replace(/"/g, '""')}"`,
+                    `"${item.owner.replace(/"/g, '""')}"`,
+                    `"${item.priority.replace(/"/g, '""')}"`,
+                    `"${item.status.replace(/"/g, '""')}"`,
+                    `"${item.workTime || 0}"`,
+                    `"${item.csat || 5}"`,
+                    `"${item.date}"`
+                ];
+                csvContent += row.join(",") + "\n";
+            });
+
+            const encodedUri = encodeURI("data:text/csv;charset=utf-8," + csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `Full_Tickets_Report_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            logAuditAction("تصدير تقرير CSV", "تم سحب تقرير إكسيل الشامل لجميع المشاكل");
+        }
+
+        function exportSlaBreachedReport() {
+            const breached = issues.filter(i => isSlaBreached(i));
+            if (breached.length === 0) {
+                alert("لا توجد مشاكل متأخرة تجاوزت SLA حالياً!");
+                return;
+            }
+
+            let csvContent = "\uFEFF";
+            csvContent += "كود المشكلة,اسم العميل,نوع المشكلة,المسؤول,الأولوية,الحالة,تاريخ الإرسال\n";
+
+            breached.forEach(item => {
+                const row = [
+                    `"${item.id}"`,
+                    `"${item.client.replace(/"/g, '""')}"`,
+                    `"${item.type.replace(/"/g, '""')}"`,
+                    `"${item.owner.replace(/"/g, '""')}"`,
+                    `"${item.priority.replace(/"/g, '""')}"`,
+                    `"${item.status.replace(/"/g, '""')}"`,
+                    `"${item.date}"`
+                ];
+                csvContent += row.join(",") + "\n";
+            });
+
+            const encodedUri = encodeURI("data:text/csv;charset=utf-8," + csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `SLA_Breached_Report_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            logAuditAction("تصدير تقرير SLA", "تم سحب تقرير التذاكر المتأخرة فقط");
+        }
+
+        function initSupabase() {
+            if (supabaseConfig.url && supabaseConfig.key) {
+                try {
+                    supabaseClient = supabase.createClient(supabaseConfig.url, supabaseConfig.key);
+                    updateCloudBadge(true, "متصل بالسحابة");
+                    document.getElementById('supabaseUrlInput').value = supabaseConfig.url;
+                    document.getElementById('supabaseKeyInput').value = supabaseConfig.key;
+                } catch(e) {
+                    updateCloudBadge(false, "خطأ بالاتصال");
+                }
+            } else {
+                updateCloudBadge(false, "غير مفعل");
+            }
+        }
+
+        function saveSupabaseConfig() {
+            const url = document.getElementById('supabaseUrlInput').value.trim();
+            const key = document.getElementById('supabaseKeyInput').value.trim();
+            supabaseConfig = { url, key };
+            saveToLocalStorage();
+            initSupabase();
+            alert("تم حفظ إعدادات Supabase وتفعيل الاتصال!");
+        }
+
+        function updateCloudBadge(isConnected, text) {
+            const badge = document.getElementById('cloudStatusBadge');
+            const icon = document.getElementById('cloudStatusIcon');
+            const txt = document.getElementById('cloudStatusText');
+            txt.innerText = text;
+            if (isConnected) {
+                badge.className = "bg-emerald-950/60 border border-emerald-800 px-2.5 py-1 rounded-xl flex items-center gap-1 text-[11px] font-bold text-emerald-400";
+                icon.className = "fa-solid fa-cloud text-emerald-400";
+            } else {
+                badge.className = "bg-slate-800 border border-slate-700 px-2.5 py-1 rounded-xl flex items-center gap-1 text-[11px] font-bold text-slate-400";
+                icon.className = "fa-solid fa-cloud text-slate-500";
+            }
+        }
+
+        async function syncToSupabaseCloud() {
+            if (!supabaseClient) return;
+            try {
+                const rows = issues.map(item => ({
+                    id: item.id,
+                    client: item.client,
+                    tag: item.tag,
+                    type: item.type,
+                    desc_text: item.desc,
+                    assigned: item.assigned,
+                    owner: item.owner,
+                    priority: item.priority,
+                    status: item.status,
+                    date: item.date,
+                    worktime: item.workTime,
+                    csat: item.csat,
+                    comments: item.comments,
+                    attachment: item.attachment
+                }));
+
+                const { error } = await supabaseClient.from('issues').upsert(rows, { onConflict: 'id' });
+                if (error) console.error("Supabase Push Error:", error);
+            } catch(e) { console.error("Supabase sync exception:", e); }
+        }
+
+        async function fetchFromSupabaseCloud() {
+            if (!supabaseClient) {
+                alert("يرجى إدخال بيانات Supabase أولاً!");
+                return;
+            }
+            try {
+                const { data, error } = await supabaseClient.from('issues').select('*');
+                if (error) throw error;
+                if (data && data.length > 0) {
+                    issues = data.map(item => ({
+                        id: item.id,
+                        client: item.client,
+                        tag: item.tag,
+                        type: item.type,
+                        desc: item.desc_text,
+                        assigned: item.assigned,
+                        owner: item.owner,
+                        priority: item.priority,
+                        status: item.status,
+                        date: item.date,
+                        workTime: item.worktime || 0,
+                        csat: item.csat || 5,
+                        comments: item.comments || [],
+                        attachment: item.attachment || null
+                    }));
+                    saveToLocalStorage();
+                    renderAll();
+                    alert(`تم جلب ${data.length} تذكرة بنجاح من السحابة!`);
+                }
+            } catch(e) {
+                alert("خطأ أثناء جلب البيانات: " + e.message);
+            }
+        }
+
+        function checkSession() {
+            const overlay = document.getElementById('fullLoginOverlay');
+            if (currentUser) {
+                overlay.classList.add('hidden');
+                updateAuthHeaderUI();
+                renderAll();
+            } else {
+                overlay.classList.remove('hidden');
+            }
+        }
+
+        function handleMainLogin(e) {
+            e.preventDefault();
+            const uInput = document.getElementById('mainUsername').value.trim();
+            const pInput = document.getElementById('mainPassword').value.trim();
+            const errDiv = document.getElementById('mainLoginErrorMsg');
+
+            const matchedUser = users.find(u => u.username.toLowerCase() === uInput.toLowerCase() && u.password === pInput);
+
+            if (matchedUser) {
+                currentUser = matchedUser;
+                errDiv.classList.add('hidden');
+                saveToLocalStorage();
+                document.getElementById('fullLoginOverlay').classList.add('hidden');
+                updateAuthHeaderUI();
+                logAuditAction("تسجيل دخول", `تم دخول المستخدم ${currentUser.name}`);
+                renderAll();
+            } else {
+                errDiv.classList.remove('hidden');
+            }
+        }
+
+        function logoutUser() {
+            if (confirm("هل تريد تسجيل الخروج من النظام؟")) {
+                currentUser = null;
+                saveToLocalStorage();
+                document.getElementById('fullLoginOverlay').classList.remove('hidden');
+            }
+        }
+
+        function updateAuthHeaderUI() {
+            if (!currentUser) return;
+            document.getElementById('currentUserDisplay').innerText = currentUser.name;
+            document.getElementById('currentRoleDisplay').innerText = currentUser.role;
+            document.getElementById('userAvatar').innerText = currentUser.name.charAt(0);
+        }
+
+        function playNotificationSound() {
+            try { document.getElementById('notifSound').play(); } catch(e) {}
+        }
+
+        function playAlarmSound() {
+            try { document.getElementById('alarmSound').play(); } catch(e) {}
+        }
+
+        function stopAlarmSound() {
+            try {
+                const alarm = document.getElementById('alarmSound');
+                alarm.pause();
+                alarm.currentTime = 0;
+            } catch(e) {}
+        }
+
+        function isSlaBreached(item) {
+            if (item.status === 'Resolved' || item.status === 'Closed') return false;
+
+            let allowedHours = defaultSlaRules.Medium;
+            if (item.priority.includes('Critical')) allowedHours = defaultSlaRules.Critical;
+            else if (item.priority.includes('High')) allowedHours = defaultSlaRules.High;
+            else if (item.priority.includes('Low')) allowedHours = defaultSlaRules.Low;
+
+            const sentDate = new Date(item.date);
+            const now = new Date();
+            const diffHours = (now - sentDate) / (1000 * 60 * 60);
+            return diffHours > allowedHours;
+        }
+
+        function checkSlaExceededNotifications() {
+            let breachedCount = 0;
+            issues.forEach(item => {
+                if (isSlaBreached(item)) {
+                    breachedCount++;
+                }
+            });
+
+            const banner = document.getElementById('slaAlarmBanner');
+            const msg = document.getElementById('slaAlarmMessage');
+
+            if (breachedCount > 0) {
+                banner.classList.remove('hidden');
+                msg.innerText = `تنبيه عاجل: توجد (${breachedCount}) تذكرة/تذاكر متأخرة تجاوزت اتفاقية SLA المعين بها!`;
+                playAlarmSound();
+            } else {
+                banner.classList.add('hidden');
+                stopAlarmSound();
+            }
+        }
+
+        function addLiveNotification(title, desc) {
+            notifications.unshift({ title, desc, time: new Date().toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'}) });
+            saveToLocalStorage();
+            renderNotifications();
+            playNotificationSound();
+        }
+
+        function toggleNotifications() {
+            document.getElementById('notif-dropdown').classList.toggle('hidden');
+        }
+
+        function clearNotifications() {
+            notifications = [];
+            saveToLocalStorage();
+            renderNotifications();
+        }
+
+        function renderNotifications() {
+            const list = document.getElementById('notif-list');
+            const badge = document.getElementById('notif-badge');
+
+            if (notifications.length > 0) {
+                badge.classList.remove('hidden');
+                badge.innerText = notifications.length;
+                list.innerHTML = '';
+                notifications.forEach(n => {
+                    const div = document.createElement('div');
+                    div.className = "p-2 bg-slate-50 dark:bg-slate-700/50 rounded-xl border border-slate-100 dark:border-slate-700";
+                    div.innerHTML = `
+                        <div class="flex justify-between font-bold text-rose-500 mb-0.5">
+                            <span>${n.title}</span>
+                            <span class="text-[9px] text-slate-400 font-normal">${n.time}</span>
+                        </div>
+                        <p class="text-slate-600 dark:text-slate-300 text-[11px]">${n.desc}</p>
+                    `;
+                    list.appendChild(div);
+                });
+            } else {
+                badge.classList.add('hidden');
+                list.innerHTML = '<p class="text-slate-400 text-center py-4">لا توجد إشعارات جديدة</p>';
+            }
+        }
+
+        function logAuditAction(action, details) {
+            auditLogs.unshift({
+                time: new Date().toLocaleString('ar-EG'),
+                user: currentUser ? currentUser.name : "System",
+                action, details
+            });
+            if (auditLogs.length > 60) auditLogs.pop();
+            saveToLocalStorage();
+        }
+
+        function clearAuditLogs() {
+            auditLogs = [];
+            saveToLocalStorage();
+            renderAuditLogs();
+        }
+
+        function renderAuditLogs() {
+            const tbody = document.getElementById('auditLogsBody');
+            if(!tbody) return;
+            tbody.innerHTML = '';
+            auditLogs.forEach(log => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 dark:hover:bg-slate-700/50";
+                tr.innerHTML = `
+                    <td class="p-2 text-slate-400 font-mono text-[11px]">${log.time}</td>
+                    <td class="p-2 font-bold text-slate-700 dark:text-slate-300">${log.user}</td>
+                    <td class="p-2 font-bold text-indigo-500">${log.action}</td>
+                    <td class="p-2 text-slate-600 dark:text-slate-400">${log.details}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function toggleDarkMode() {
+            const html = document.documentElement;
+            const icon = document.getElementById('theme-icon');
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                icon.className = 'fa-solid fa-sun text-amber-500';
+            } else {
+                html.classList.add('dark');
+                icon.className = 'fa-solid fa-moon text-amber-400';
+            }
+        }
+
+        function switchTab(tab) {
+            if (tab === 'admin' && currentUser.role !== 'Admin') {
+                alert("عذراً! لوحة الإدمن مقتصرة فقط على المديرين (Admin).");
+                return;
+            }
+
+            document.getElementById('view-dashboard').classList.add('hidden');
+            document.getElementById('view-issues').classList.add('hidden');
+            document.getElementById('view-admin').classList.add('hidden');
+
+            const activeClass = "px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-1.5 bg-indigo-600 text-white shadow-md";
+            const inactiveClass = "px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-1.5 text-slate-300 hover:bg-slate-800";
+
+            document.getElementById('btn-dashboard').className = inactiveClass;
+            document.getElementById('btn-issues').className = inactiveClass;
+            document.getElementById('btn-admin').className = inactiveClass;
+
+            if (tab === 'dashboard') {
+                document.getElementById('view-dashboard').classList.remove('hidden');
+                document.getElementById('btn-dashboard').className = activeClass;
+                renderDashboard();
+            } else if (tab === 'issues') {
+                document.getElementById('view-issues').classList.remove('hidden');
+                document.getElementById('btn-issues').className = activeClass;
+                renderIssues();
+            } else if (tab === 'admin') {
+                document.getElementById('view-admin').classList.remove('hidden');
+                document.getElementById('btn-admin').className = activeClass;
+                renderAdmin();
+            }
+        }
+
+        function renderAll() {
+            renderDashboard();
+            renderIssues();
+            renderNotifications();
+        }
+
+        function calculateSlaBadge(dateSentStr, priorityStr, statusStr) {
+            if (statusStr === 'Resolved' || statusStr === 'Closed') {
+                return '<span class="bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 px-2 py-0.5 rounded text-[10px] font-bold">✅ تم الالتزام</span>';
+            }
+
+            let allowedHours = defaultSlaRules.Medium;
+            if (priorityStr.includes('Critical')) allowedHours = defaultSlaRules.Critical;
+            else if (priorityStr.includes('High')) allowedHours = defaultSlaRules.High;
+            else if (priorityStr.includes('Low')) allowedHours = defaultSlaRules.Low;
+
+            const sentDate = new Date(dateSentStr);
+            const now = new Date();
+            const diffMs = now - sentDate;
+            const diffHours = diffMs / (1000 * 60 * 60);
+            const remainingHours = allowedHours - diffHours;
+
+            if (remainingHours <= 0) {
+                const lateHrs = Math.floor(Math.abs(remainingHours));
+                const lateMins = Math.floor((Math.abs(remainingHours) - lateHrs) * 60);
+                return `<span class="bg-rose-600 text-white px-2 py-0.5 rounded text-[10px] font-bold animate-pulse shadow">⚠️ متأخر (${lateHrs}س ${lateMins}د)</span>`;
+            } else if (remainingHours <= 2) {
+                const remHrs = Math.floor(remainingHours);
+                const remMins = Math.floor((remainingHours - remHrs) * 60);
+                return `<span class="bg-amber-500 text-white px-2 py-0.5 rounded text-[10px] font-bold shadow">⏳ ينتهي قريباً (${remHrs}س ${remMins}د)</span>`;
+            } else {
+                const remHrs = Math.floor(remainingHours);
+                return `<span class="bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 px-2 py-0.5 rounded text-[10px] font-bold">⏱️ متبقي ${remHrs}س</span>`;
+            }
+        }
+
+        function formatSecondsToHMS(secs) {
+            if (!secs) secs = 0;
+            const h = Math.floor(secs / 3600).toString().padStart(2, '0');
+            const m = Math.floor((secs % 3600) / 60).toString().padStart(2, '0');
+            const s = (secs % 60).toString().padStart(2, '0');
+            return `${h}:${m}:${s}`;
+        }
+
+        function markSingleAsResolved(index) {
+            if (issues[index]) {
+                issues[index].status = 'Resolved';
+                logAuditAction("تغيير حالة تذكرة", `تم تحويل التذكرة ${issues[index].id} إلى Resolved`);
+                saveToLocalStorage();
+                renderAll();
+                checkSlaExceededNotifications();
+            }
+        }
+
+        function renderDashboard() {
+            const total = issues.length;
+            const open = issues.filter(i => i.status === 'Open').length;
+            const pending = issues.filter(i => i.status === 'Pending').length;
+            const closed = issues.filter(i => i.status === 'Resolved' || i.status === 'Closed').length;
+            const slaBreached = issues.filter(i => isSlaBreached(i)).length;
+
+            let totalCsat = 0, csatCount = 0;
+            issues.forEach(i => { if (i.csat) { totalCsat += i.csat; csatCount++; } });
+            const avgCsat = csatCount > 0 ? (totalCsat / csatCount).toFixed(1) : "5.0";
+
+            document.getElementById('kpi-total').innerText = total;
+            document.getElementById('kpi-open').innerText = open;
+            document.getElementById('kpi-pending').innerText = pending;
+            document.getElementById('kpi-sla-breach').innerText = slaBreached;
+            document.getElementById('kpi-csat').innerText = avgCsat;
+
+            const ctxStatus = document.getElementById('statusChart').getContext('2d');
+            if (statusChartInstance) statusChartInstance.destroy();
+            statusChartInstance = new Chart(ctxStatus, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Open (مفتوحة)', 'Pending (معلقة)', 'Resolved/Closed (مغلقة)'],
+                    datasets: [{ data: [open, pending, closed], backgroundColor: ['#f43f5e', '#f59e0b', '#10b981'] }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+            });
+
+            const ctxPriority = document.getElementById('priorityChart').getContext('2d');
+            const critical = issues.filter(i => i.priority.includes('Critical')).length;
+            const high = issues.filter(i => i.priority.includes('High')).length;
+            const medium = issues.filter(i => i.priority.includes('Medium')).length;
+            const low = issues.filter(i => i.priority.includes('Low')).length;
+
+            if (priorityChartInstance) priorityChartInstance.destroy();
+            priorityChartInstance = new Chart(ctxPriority, {
+                type: 'bar',
+                data: {
+                    labels: ['Critical', 'High', 'Medium', 'Low'],
+                    datasets: [{ label: 'عدد المشاكل', data: [critical, high, medium, low], backgroundColor: ['#b91c1c', '#ea580c', '#eab308', '#16a34a'] }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+
+            const ctxCat = document.getElementById('categoryChart').getContext('2d');
+            const catCounts = categories.map(cat => issues.filter(i => i.type === cat.name).length);
+
+            if (categoryChartInstance) categoryChartInstance.destroy();
+            categoryChartInstance = new Chart(ctxCat, {
+                type: 'polarArea',
+                data: {
+                    labels: categories.map(c => c.name.split('/')[0].trim()),
+                    datasets: [{ data: catCounts, backgroundColor: ['#6366f1', '#ec4899', '#14b8a6', '#f97316', '#8b5cf6'] }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+            });
+        }
+
+        function renderIssues() {
+            const tbody = document.getElementById('issuesTableBody');
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const filterStatus = document.getElementById('filterStatus').value;
+            const filterPriority = document.getElementById('filterPriority').value;
+            const filterTag = document.getElementById('filterTag').value;
+
+            tbody.innerHTML = '';
+
+            const filtered = issues.filter((item) => {
+                const matchesSearch = item.client.toLowerCase().includes(search) ||
+                                      item.desc.toLowerCase().includes(search) ||
+                                      item.owner.toLowerCase().includes(search) ||
+                                      (item.tag && item.tag.toLowerCase().includes(search)) ||
+                                      item.id.toLowerCase().includes(search);
+                
+                let matchesStatus = filterStatus === 'ALL' || item.status === filterStatus;
+                if (filterStatus === 'Breached') {
+                    matchesStatus = isSlaBreached(item);
+                }
+
+                const matchesPriority = filterPriority === 'ALL' || item.priority === filterPriority;
+                const matchesTag = filterTag === 'ALL' || item.tag === filterTag;
+
+                return matchesSearch && matchesStatus && matchesPriority && matchesTag;
+            });
+
+            filtered.forEach((item, index) => {
+                let statusBadge = '';
+                if(item.status === 'Open') statusBadge = '<span class="bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 px-2.5 py-0.5 rounded-full text-xs font-bold">🔴 Open</span>';
+                else if(item.status === 'Pending') statusBadge = '<span class="bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 px-2.5 py-0.5 rounded-full text-xs font-bold">🟠 Pending</span>';
+                else if(item.status === 'Resolved') statusBadge = '<span class="bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 px-2.5 py-0.5 rounded-full text-xs font-bold">🟢 Resolved</span>';
+                else statusBadge = '<span class="bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-2.5 py-0.5 rounded-full text-xs font-bold">⚪ Closed</span>';
+
+                const slaBadge = calculateSlaBadge(item.date, item.priority, item.status);
+                const breachedClass = isSlaBreached(item) ? 'alarm-active' : '';
+
+                const deleteButtonHtml = currentUser && currentUser.role === 'Admin'
+                    ? `<button onclick="deleteIssue(${index})" class="text-rose-600 hover:text-rose-800 dark:text-rose-400 p-1 rounded" title="حذف"><i class="fa-solid fa-trash"></i></button>`
+                    : `<button onclick="alert('عذراً! الحذف مقتصر فقط على الأدمن.')" class="text-slate-300 p-1"><i class="fa-solid fa-lock text-xs"></i></button>`;
+
+                const resolveButtonHtml = item.status !== 'Resolved' && item.status !== 'Closed'
+                    ? `<button onclick="markSingleAsResolved(${index})" class="text-emerald-600 hover:text-emerald-800 dark:text-emerald-400 p-1" title="تحويل التذكرة لـ Resolved"><i class="fa-solid fa-circle-check"></i></button>`
+                    : '';
+
+                const tagBadge = item.tag ? `<span class="bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 px-1.5 py-0.5 rounded text-[10px] font-bold block w-max mt-1">${item.tag}</span>` : '';
+
+                const tr = document.createElement('tr');
+                tr.className = `hover:bg-slate-50 dark:hover:bg-slate-700/50 transition ${breachedClass}`;
+                tr.innerHTML = `
+                    <td class="p-3 text-center"><input type="checkbox" class="issue-checkbox rounded text-indigo-600" value="${index}" onchange="updateBulkBar()"></td>
+                    <td class="p-3 font-mono font-bold text-indigo-600 dark:text-indigo-400 text-xs">${item.id}</td>
+                    <td class="p-3 font-extrabold text-slate-800 dark:text-slate-100">${item.client} ${tagBadge}</td>
+                    <td class="p-3 text-slate-500 dark:text-slate-400">${item.type}</td>
+                    <td class="p-3 text-slate-700 dark:text-slate-300 max-w-xs truncate" title="${item.desc}">${item.desc}</td>
+                    <td class="p-3 text-slate-600 dark:text-slate-400">${item.assigned}</td>
+                    <td class="p-3 text-amber-600 dark:text-amber-400 font-bold">${item.owner}</td>
+                    <td class="p-3 font-mono text-xs font-bold text-emerald-600 dark:text-emerald-400"><i class="fa-solid fa-clock ml-1 text-[10px]"></i>${formatSecondsToHMS(item.workTime)}</td>
+                    <td class="p-3 font-bold text-xs">${item.priority}</td>
+                    <td class="p-3">${statusBadge}</td>
+                    <td class="p-3">${slaBadge}</td>
+                    <td class="p-3 text-center space-x-1 space-x-reverse">
+                        ${resolveButtonHtml}
+                        <button onclick="openDetailsModal(${index})" class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 p-1" title="التفاصيل"><i class="fa-solid fa-comments"></i></button>
+                        <button onclick="editIssue(${index})" class="text-amber-600 dark:text-amber-400 hover:text-amber-800 p-1" title="تعديل"><i class="fa-solid fa-pen-to-square"></i></button>
+                        ${deleteButtonHtml}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function populateCategoryDropdowns() {
+            const select = document.getElementById('issueType');
+            select.innerHTML = '';
+            categories.forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = cat.name;
+                opt.innerText = cat.name;
+                select.appendChild(opt);
+            });
+            autoRouteAssignee();
+        }
+
+        function autoRouteAssignee() {
+            const selectedType = document.getElementById('issueType').value;
+            const matchedCat = categories.find(c => c.name === selectedType);
+            if (matchedCat) {
+                document.getElementById('assignedTo').value = matchedCat.assigned;
+                document.getElementById('currentOwner').value = matchedCat.owner;
+            }
+        }
+
+        function handleFileUpload(event, type) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const fileData = { name: file.name, type: file.type, data: e.target.result };
+                if (type === 'ticket') {
+                    tempTicketAttachment = fileData;
+                    document.getElementById('attachmentPreview').innerHTML = `<span class="text-xs text-emerald-600 font-bold">✓ تم إرفاق الملف: ${file.name}</span>`;
+                    document.getElementById('attachmentPreview').classList.remove('hidden');
+                } else if (type === 'comment') {
+                    tempCommentAttachment = fileData;
+                    document.getElementById('commentFilePreview').innerText = `✓ مرفق جاهز: ${file.name}`;
+                    document.getElementById('commentFilePreview').classList.remove('hidden');
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function openIssueModal() {
+            populateCategoryDropdowns();
+            document.getElementById('issueForm').reset();
+            document.getElementById('issueIndex').value = '';
+            document.getElementById('attachmentPreview').classList.add('hidden');
+            tempTicketAttachment = null;
+            document.getElementById('modalTitle').innerText = 'إضافة مشكلة جديدة';
+            document.getElementById('dateSent').valueAsDate = new Date();
+            document.getElementById('issueModal').classList.remove('hidden');
+            document.getElementById('issueModal').classList.add('flex');
+        }
+
+        function closeIssueModal() {
+            document.getElementById('issueModal').classList.add('hidden');
+            document.getElementById('issueModal').classList.remove('flex');
+        }
+
+        function saveIssue(e) {
+            e.preventDefault();
+            const index = document.getElementById('issueIndex').value;
+            const priorityVal = document.getElementById('priority').value;
+
+            const issueData = {
+                id: index !== '' ? issues[index].id : 'INC-' + (1001 + issues.length),
+                client: document.getElementById('clientName').value.trim(),
+                tag: document.getElementById('issueTag').value,
+                type: document.getElementById('issueType').value,
+                desc: document.getElementById('issueDesc').value.trim(),
+                assigned: document.getElementById('assignedTo').value.trim(),
+                owner: document.getElementById('currentOwner').value.trim(),
+                priority: priorityVal,
+                status: document.getElementById('status').value,
+                date: document.getElementById('dateSent').value,
+                workTime: index !== '' ? (issues[index].workTime || 0) : 0,
+                csat: index !== '' ? (issues[index].csat || 5) : 5,
+                attachment: tempTicketAttachment || (index !== '' ? issues[index].attachment : null),
+                comments: index !== '' ? (issues[index].comments || []) : []
+            };
+
+            if (index !== '') {
+                issues[index] = issueData;
+                logAuditAction("تعديل مشكلة", `تم تحديث بيانات التيكت ${issueData.id}`);
+            } else {
+                issues.unshift(issueData);
+                logAuditAction("إضافة مشكلة", `تم فتح تيكت جديد ${issueData.id}`);
+
+                if (priorityVal.includes('Critical')) {
+                    addLiveNotification(`🔴 مشكلة حرجة جديدة: ${issueData.id}`, `قام العميل ${issueData.client} برفع بلاغ حرج للغاية!`);
+                }
+            }
+
+            saveToLocalStorage();
+            closeIssueModal();
+            renderAll();
+            checkSlaExceededNotifications();
+        }
+
+        function editIssue(index) {
+            populateCategoryDropdowns();
+            const item = issues[index];
+            document.getElementById('issueIndex').value = index;
+            document.getElementById('clientName').value = item.client;
+            document.getElementById('issueTag').value = item.tag || 'Software';
+            document.getElementById('issueType').value = item.type;
+            document.getElementById('issueDesc').value = item.desc;
+            document.getElementById('assignedTo').value = item.assigned;
+            document.getElementById('currentOwner').value = item.owner;
+            document.getElementById('priority').value = item.priority;
+            document.getElementById('status').value = item.status;
+            document.getElementById('dateSent').value = item.date;
+
+            document.getElementById('modalTitle').innerText = 'تعديل بيانات المشكلة (' + item.id + ')';
+            document.getElementById('issueModal').classList.remove('hidden');
+            document.getElementById('issueModal').classList.add('flex');
+        }
+
+        function deleteIssue(index) {
+            if (!currentUser || currentUser.role !== 'Admin') {
+                alert("عذراً! الحذف مقتصر على الأدمن فقط.");
+                return;
+            }
+            const item = issues[index];
+            if (confirm(`هل أنت تأكد من حذف المشكلة (${item.id}) نهائياً؟`)) {
+                issues.splice(index, 1);
+                saveToLocalStorage();
+                renderAll();
+                checkSlaExceededNotifications();
+            }
+        }
+
+        function openDetailsModal(index) {
+            activeDetailIndex = index;
+            const item = issues[index];
+
+            document.getElementById('detailId').innerText = item.id;
+            document.getElementById('detailClient').innerText = item.client;
+            document.getElementById('detailTag').innerText = item.tag || 'General';
+            document.getElementById('detailType').innerText = item.type;
+            document.getElementById('detailPriority').innerText = item.priority;
+            document.getElementById('detailStatus').innerText = item.status;
+            document.getElementById('detailOwner').innerText = item.owner;
+            document.getElementById('detailDesc').innerText = item.desc;
+
+            const attachContainer = document.getElementById('detailAttachmentContainer');
+            if (item.attachment) {
+                attachContainer.classList.remove('hidden');
+                if (item.attachment.type && item.attachment.type.startsWith('image/')) {
+                    attachContainer.innerHTML = `<p class="text-[10px] text-slate-400 mb-1">صورة مرفقة:</p><img src="${item.attachment.data}" class="max-h-48 rounded-xl border border-slate-300 dark:border-slate-700">`;
+                } else {
+                    attachContainer.innerHTML = `<a href="${item.attachment.data}" download="${item.attachment.name}" class="text-xs text-indigo-500 underline font-bold"><i class="fa-solid fa-paperclip ml-1"></i> تحميل المرفق (${item.attachment.name})</a>`;
+                }
+            } else {
+                attachContainer.classList.add('hidden');
+            }
+
+            timerSeconds = item.workTime || 0;
+            document.getElementById('timerDisplay').innerText = formatSecondsToHMS(timerSeconds);
+            
+            startWorkTimer();
+            setCsatRatingUI(item.csat || 5);
+            renderCommentsList(item.comments || []);
+            document.getElementById('detailsModal').classList.remove('hidden');
+            document.getElementById('detailsModal').classList.add('flex');
+        }
+
+        function closeDetailsModal() {
+            stopWorkTimer();
+            activeDetailIndex = null;
+            document.getElementById('detailsModal').classList.add('hidden');
+            document.getElementById('detailsModal').classList.remove('flex');
+        }
+
+        function startWorkTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+
+            document.getElementById('btnStartTimer').classList.add('hidden');
+            document.getElementById('btnStopTimer').classList.remove('hidden');
+
+            timerInterval = setInterval(() => {
+                if (activeDetailIndex !== null && issues[activeDetailIndex]) {
+                    if (issues[activeDetailIndex].status !== 'Resolved' && issues[activeDetailIndex].status !== 'Closed') {
+                        timerSeconds++;
+                        issues[activeDetailIndex].workTime = timerSeconds;
+                        document.getElementById('timerDisplay').innerText = formatSecondsToHMS(timerSeconds);
+                    }
+                }
+            }, 1000);
+        }
+
+        function stopWorkTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            document.getElementById('btnStartTimer').classList.remove('hidden');
+            document.getElementById('btnStopTimer').classList.add('hidden');
+
+            if (activeDetailIndex !== null && issues[activeDetailIndex]) {
+                issues[activeDetailIndex].workTime = timerSeconds;
+                saveToLocalStorage();
+                renderIssues();
+            }
+        }
+
+        function setCsatRating(rating) {
+            if (activeDetailIndex === null) return;
+            issues[activeDetailIndex].csat = rating;
+            setCsatRatingUI(rating);
+            saveToLocalStorage();
+            renderDashboard();
+        }
+
+        function setCsatRatingUI(rating) {
+            const starsContainer = document.getElementById('csatStars');
+            if (!starsContainer) return;
+            const stars = starsContainer.querySelectorAll('i');
+            stars.forEach((star, idx) => {
+                if (idx < rating) {
+                    star.className = 'fa-solid fa-star text-amber-400';
+                } else {
+                    star.className = 'fa-regular fa-star text-amber-400';
+                }
+            });
+        }
+
+        function renderCommentsList(comments) {
+            const list = document.getElementById('commentsList');
+            list.innerHTML = '';
+            if (!comments || comments.length === 0) {
+                list.innerHTML = '<p class="text-xs text-slate-400 text-center py-2">لا توجد تعليقات أو تحديثات سابقة</p>';
+                return;
+            }
+
+            comments.forEach(c => {
+                const div = document.createElement('div');
+                div.className = "bg-slate-50 dark:bg-slate-900 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs space-y-1";
+
+                let attachHtml = '';
+                if (c.attachment) {
+                    attachHtml = `<div class="mt-1"><a href="${c.attachment.data}" download="${c.attachment.name}" class="text-[10px] text-indigo-500 font-bold underline"><i class="fa-solid fa-paperclip ml-0.5"></i> ${c.attachment.name}</a></div>`;
+                }
+
+                div.innerHTML = `
+                    <div class="flex justify-between font-bold text-slate-700 dark:text-slate-300">
+                        <span class="text-indigo-600 dark:text-indigo-400">${c.user}</span>
+                        <span class="text-[10px] text-slate-400 font-normal">${c.time}</span>
+                    </div>
+                    <p class="text-slate-600 dark:text-slate-300 leading-relaxed">${c.text}</p>
+                    ${attachHtml}
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function addComment() {
+            const input = document.getElementById('newCommentInput');
+            const text = input.value.trim();
+            if (!text && !tempCommentAttachment) return;
+
+            if (activeDetailIndex !== null && issues[activeDetailIndex]) {
+                const commentObj = {
+                    user: currentUser ? currentUser.name : "مستخدم",
+                    text: text || "قام برفع مرفق جديد",
+                    time: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
+                    attachment: tempCommentAttachment
+                };
+
+                if (!issues[activeDetailIndex].comments) issues[activeDetailIndex].comments = [];
+                issues[activeDetailIndex].comments.push(commentObj);
+
+                input.value = '';
+                tempCommentAttachment = null;
+                document.getElementById('commentFilePreview').classList.add('hidden');
+                document.getElementById('commentAttachment').value = '';
+
+                saveToLocalStorage();
+                renderCommentsList(issues[activeDetailIndex].comments);
+            }
+        }
+
+        function printPDFReport() {
+            window.print();
+        }
+
+        function toggleSelectAll(master) {
+            const checkboxes = document.querySelectorAll('.issue-checkbox');
+            checkboxes.forEach(cb => cb.checked = master.checked);
+            updateBulkBar();
+        }
+
+        function updateBulkBar() {
+            const selected = document.querySelectorAll('.issue-checkbox:checked');
+            const wrapper = document.getElementById('bulkActionsWrapper');
+            const countSpan = document.getElementById('selectedCount');
+
+            if (selected.length > 0) {
+                wrapper.classList.remove('hidden');
+                countSpan.innerText = `${selected.length} محدد`;
+            } else {
+                wrapper.classList.add('hidden');
+            }
+        }
+
+        function bulkChangeStatus(newStatus) {
+            const selected = document.querySelectorAll('.issue-checkbox:checked');
+            selected.forEach(cb => {
+                const idx = cb.value;
+                if (issues[idx]) {
+                    issues[idx].status = newStatus;
+                }
+            });
+            saveToLocalStorage();
+            renderAll();
+            updateBulkBar();
+            checkSlaExceededNotifications();
+        }
+
+        function bulkDelete() {
+            if (!currentUser || currentUser.role !== 'Admin') {
+                alert("عذراً! الحذف مقتصر فقط على المديرين.");
+                return;
+            }
+            const selected = document.querySelectorAll('.issue-checkbox:checked');
+            if (confirm(`هل أنت تأكد من حذف (${selected.length}) تذكرة محددة؟`)) {
+                const indices = Array.from(selected).map(cb => parseInt(cb.value)).sort((a,b) => b - a);
+                indices.forEach(idx => {
+                    issues.splice(idx, 1);
+                });
+                saveToLocalStorage();
+                renderAll();
+                updateBulkBar();
+                checkSlaExceededNotifications();
+            }
+        }
+
+        function switchAdminSubTab(subtab) {
+            const tabs = ['users', 'reports', 'categories', 'supabase', 'csat', 'audit'];
+            tabs.forEach(t => {
+                const el = document.getElementById(`admin-${t}`);
+                const btn = document.getElementById(`subtab-btn-${t}`);
+                if (el) el.classList.add('hidden');
+                if (btn) btn.className = "pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200";
+            });
+
+            const activeEl = document.getElementById(`admin-${subtab}`);
+            const activeBtn = document.getElementById(`subtab-btn-${subtab}`);
+            if (activeEl) activeEl.classList.remove('hidden');
+            if (activeBtn) activeBtn.className = "pb-3 border-b-2 border-indigo-600 text-indigo-600 dark:text-indigo-400";
+
+            if (subtab === 'users') renderUsersTable();
+            if (subtab === 'categories') renderCategoriesList();
+            if (subtab === 'csat') renderCsatList();
+            if (subtab === 'audit') renderAuditLogs();
+        }
+
+        function renderAdmin() {
+            renderUsersTable();
+            renderCategoriesList();
+            renderCsatList();
+            renderAuditLogs();
+            document.getElementById('slaCritical').value = defaultSlaRules.Critical;
+            document.getElementById('slaHigh').value = defaultSlaRules.High;
+            document.getElementById('slaMedium').value = defaultSlaRules.Medium;
+            document.getElementById('slaLow').value = defaultSlaRules.Low;
+        }
+
+        function renderUsersTable() {
+            const tbody = document.getElementById('usersTableBody');
+            if(!tbody) return;
+            tbody.innerHTML = '';
+            users.forEach((u, index) => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 dark:hover:bg-slate-700/50";
+                tr.innerHTML = `
+                    <td class="p-3 font-bold text-slate-800 dark:text-slate-100">${u.name}</td>
+                    <td class="p-3 font-mono text-indigo-600 dark:text-indigo-400 font-bold">${u.username}</td>
+                    <td class="p-3 font-mono text-slate-400">••••••••</td>
+                    <td class="p-3 text-slate-500">${u.email}</td>
+                    <td class="p-3"><span class="bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded text-xs font-bold">${u.role}</span></td>
+                    <td class="p-3 text-center space-x-1 space-x-reverse">
+                        <button onclick="editUser(${index})" class="text-amber-500 hover:text-amber-700 p-1"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button onclick="deleteUser(${index})" class="text-rose-500 hover:text-rose-700 p-1"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function openUserModal() {
+            document.getElementById('userForm').reset();
+            document.getElementById('userEditIndex').value = '';
+            document.getElementById('userModalTitle').innerText = 'إنشاء حساب مستخدم جديد';
+            document.getElementById('userModal').classList.remove('hidden');
+            document.getElementById('userModal').classList.add('flex');
+        }
+
+        function closeUserModal() {
+            document.getElementById('userModal').classList.add('hidden');
+            document.getElementById('userModal').classList.remove('flex');
+        }
+
+        function saveUser(e) {
+            e.preventDefault();
+            const index = document.getElementById('userEditIndex').value;
+            const uData = {
+                name: document.getElementById('addUserName').value.trim(),
+                username: document.getElementById('addUserUsername').value.trim(),
+                password: document.getElementById('addUserPassword').value.trim(),
+                email: document.getElementById('addUserEmail').value.trim(),
+                role: document.getElementById('addUserRole').value
+            };
+
+            if (index !== '') {
+                users[index] = uData;
+            } else {
+                users.push(uData);
+            }
+
+            saveToLocalStorage();
+            closeUserModal();
+            renderUsersTable();
+        }
+
+        function editUser(index) {
+            const u = users[index];
+            document.getElementById('userEditIndex').value = index;
+            document.getElementById('addUserName').value = u.name;
+            document.getElementById('addUserUsername').value = u.username;
+            document.getElementById('addUserPassword').value = u.password;
+            document.getElementById('addUserEmail').value = u.email;
+            document.getElementById('addUserRole').value = u.role;
+
+            document.getElementById('userModalTitle').innerText = 'تعديل بيانات الحساب';
+            document.getElementById('userModal').classList.remove('hidden');
+            document.getElementById('userModal').classList.add('flex');
+        }
+
+        function deleteUser(index) {
+            if (users.length <= 1) {
+                alert("لا يمكن حذف آخر حساب إدمن بالنظام!");
+                return;
+            }
+            if (confirm("هل أنت تأكد من حذف هذا الحساب؟")) {
+                users.splice(index, 1);
+                saveToLocalStorage();
+                renderUsersTable();
+            }
+        }
+
+        function addCategory() {
+            const name = document.getElementById('newCategoryInput').value.trim();
+            const assigned = document.getElementById('newCatAssignInput').value.trim();
+            const owner = document.getElementById('newCatOwnerInput').value.trim();
+
+            if (!name || !assigned || !owner) {
+                alert("يرجى ملء جميع الحقول للقسم والتعيين التلقائي!");
+                return;
+            }
+
+            categories.push({ name, assigned, owner });
+            document.getElementById('newCategoryInput').value = '';
+            document.getElementById('newCatAssignInput').value = '';
+            document.getElementById('newCatOwnerInput').value = '';
+
+            saveToLocalStorage();
+            renderCategoriesList();
+            populateCategoryDropdowns();
+        }
+
+        function deleteCategory(index) {
+            if (categories.length <= 1) {
+                alert("يجب أن يتبقى قسم واحد على الأقل بالنظام!");
+                return;
+            }
+            if (confirm("هل أنت تأكد من حذف هذا القسم؟")) {
+                categories.splice(index, 1);
+                saveToLocalStorage();
+                renderCategoriesList();
+                populateCategoryDropdowns();
+            }
+        }
+
+        function renderCategoriesList() {
+            const list = document.getElementById('categoriesList');
+            if(!list) return;
+            list.innerHTML = '';
+            categories.forEach((cat, idx) => {
+                const li = document.createElement('li');
+                li.className = "py-2 flex justify-between items-center";
+                li.innerHTML = `
+                    <div>
+                        <span class="font-bold text-slate-800 dark:text-slate-100">${cat.name}</span>
+                        <p class="text-[10px] text-slate-400">فريق: ${cat.assigned} | مسؤول: ${cat.owner}</p>
+                    </div>
+                    <button onclick="deleteCategory(${idx})" class="text-rose-500 hover:text-rose-700 text-xs"><i class="fa-solid fa-trash"></i></button>
+                `;
+                list.appendChild(li);
+            });
+        }
+
+        function saveSlaRules() {
+            defaultSlaRules.Critical = parseInt(document.getElementById('slaCritical').value) || 4;
+            defaultSlaRules.High = parseInt(document.getElementById('slaHigh').value) || 12;
+            defaultSlaRules.Medium = parseInt(document.getElementById('slaMedium').value) || 24;
+            defaultSlaRules.Low = parseInt(document.getElementById('slaLow').value) || 48;
+
+            saveToLocalStorage();
+            renderIssues();
+            checkSlaExceededNotifications();
+            alert("تم حفظ قواعد SLA المحدثة بنجاح!");
+        }
+
+        function renderCsatList() {
+            const container = document.getElementById('csatList');
+            if(!container) return;
+            container.innerHTML = '';
+
+            const rated = issues.filter(i => i.csat);
+            if (rated.length === 0) {
+                container.innerHTML = '<p class="text-xs text-slate-400 text-center py-4">لا توجد تقييمات مسجلة بعد</p>';
+                return;
+            }
+
+            rated.forEach(item => {
+                let stars = '';
+                for(let i=1; i<=5; i++) {
+                    stars += i <= item.csat ? '<i class="fa-solid fa-star text-amber-400"></i>' : '<i class="fa-regular fa-star text-amber-400"></i>';
+                }
+
+                const div = document.createElement('div');
+                div.className = "bg-slate-50 dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-700 flex justify-between items-center text-xs";
+                div.innerHTML = `
+                    <div>
+                        <span class="font-bold text-indigo-500">${item.id}</span> - <span class="font-extrabold">${item.client}</span>
+                        <p class="text-[10px] text-slate-400">المسؤول: ${item.owner}</p>
+                    </div>
+                    <div class="flex items-center gap-1 text-sm">${stars} <span class="font-bold mr-1 text-slate-600 dark:text-slate-300">(${item.csat}.0)</span></div>
+                `;
+                container.appendChild(div);
+            });
+        }
+    </script>
+</body>
+</html>
