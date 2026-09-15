@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>منظومة متابعة وتتبع المشاكل والطلبات | Enterprise Issue Tracker Pro</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -17,9 +18,12 @@
             }
         }
     </script>
+    <!-- FontAwesome Icons & Cairo Font -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800;900&display=swap">
+    <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: 'Cairo', sans-serif; }
@@ -40,6 +44,7 @@
 </head>
 <body class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col transition-colors duration-200">
 
+    <!-- GLOBAL CRITICAL SLA ALARM BANNER -->
     <div id="slaAlarmBanner" class="hidden bg-rose-600 text-white px-4 py-2 text-xs font-black flex justify-between items-center shadow-lg border-b border-rose-700 animate-pulse z-50">
         <div class="flex items-center gap-2">
             <i class="fa-solid fa-triangle-exclamation text-amber-300 text-lg"></i>
@@ -50,6 +55,7 @@
         </button>
     </div>
 
+    <!-- LOGIN OVERLAY -->
     <div id="fullLoginOverlay" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex items-center justify-center p-4">
         <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200 dark:border-slate-700">
             <div class="bg-gradient-to-r from-indigo-900 via-slate-900 to-indigo-950 text-white p-6 text-center relative">
@@ -94,6 +100,7 @@
         </div>
     </div>
 
+    <!-- MAIN HEADER -->
     <header class="bg-slate-900 text-white shadow-xl sticky top-0 z-40 border-b border-slate-800">
         <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-3">
             <div class="flex items-center space-x-3 space-x-reverse">
@@ -106,6 +113,7 @@
                 </div>
             </div>
 
+            <!-- Main App Nav Tabs -->
             <div class="flex items-center space-x-1.5 space-x-reverse bg-slate-800/80 p-1.5 rounded-2xl border border-slate-700">
                 <button onclick="switchTab('dashboard')" id="btn-dashboard" class="px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-1.5 bg-indigo-600 text-white shadow-md">
                     <i class="fa-solid fa-chart-pie text-xs"></i> <span>لوحة التحكم</span>
@@ -118,12 +126,15 @@
                 </button>
             </div>
 
+            <!-- Controls -->
             <div class="flex items-center space-x-2 space-x-reverse">
+                <!-- Supabase Sync Status Indicator -->
                 <div id="cloudStatusBadge" class="bg-slate-800 border border-slate-700 px-2.5 py-1 rounded-xl flex items-center gap-1 text-[11px] font-bold text-slate-400" title="حالة مزامنة السحابة Supabase">
                     <i id="cloudStatusIcon" class="fa-solid fa-cloud text-slate-500"></i>
                     <span id="cloudStatusText" class="hidden md:inline">غير متصل</span>
                 </div>
 
+                <!-- Notifications Dropdown -->
                 <div class="relative">
                     <button onclick="toggleNotifications()" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 relative transition">
                         <i class="fa-solid fa-bell text-sm"></i>
@@ -140,10 +151,12 @@
                     </div>
                 </div>
 
+                <!-- Dark / Light Mode Switcher -->
                 <button onclick="toggleDarkMode()" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 transition" title="تبديل النمط">
                     <i id="theme-icon" class="fa-solid fa-moon text-sm"></i>
                 </button>
 
+                <!-- Current Logged In User Badge -->
                 <div class="bg-slate-800 border border-slate-700 px-3 py-1 rounded-xl flex items-center gap-2">
                     <div class="w-7 h-7 rounded-lg bg-indigo-500 text-white font-bold flex items-center justify-center text-xs" id="userAvatar">أ</div>
                     <div class="hidden md:block">
@@ -155,6 +168,7 @@
                     </button>
                 </div>
 
+                <!-- Create Ticket Button -->
                 <button onclick="openIssueModal()" class="px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-emerald-600 hover:bg-emerald-500 text-white transition shadow-lg shadow-emerald-600/20 flex items-center gap-1.5">
                     <i class="fa-solid fa-plus"></i> <span class="hidden sm:inline">إضافة مشكلة</span>
                 </button>
@@ -162,9 +176,12 @@
         </div>
     </header>
 
+    <!-- MAIN BODY CONTENT -->
     <main class="max-w-7xl mx-auto px-4 py-6 flex-grow w-full space-y-6">
 
+        <!-- VIEW 1: EXECUTIVE DASHBOARD -->
         <div id="view-dashboard" class="space-y-6">
+            <!-- 4 Main KPI Cards Grid -->
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 flex items-center justify-between">
                     <div>
@@ -196,6 +213,7 @@
                     </div>
                 </div>
 
+                <!-- SLA Breached KPI Card -->
                 <div class="bg-rose-50 dark:bg-rose-950/40 p-4 rounded-2xl shadow-sm border border-rose-200 dark:border-rose-900 flex items-center justify-between">
                     <div>
                         <p class="text-[11px] font-bold text-rose-600 dark:text-rose-400">تجاوزت الـ SLA ⚠️</p>
@@ -207,6 +225,7 @@
                 </div>
             </div>
 
+            <!-- Full Width CSAT Feature Banner Card -->
             <div class="bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-amber-200 dark:border-amber-900/40 flex flex-wrap items-center justify-between gap-4">
                 <div class="flex items-center gap-4">
                     <div class="w-12 h-12 bg-amber-500 text-white rounded-2xl flex items-center justify-center text-2xl shadow-lg shadow-amber-500/30">
@@ -226,6 +245,7 @@
                 </div>
             </div>
 
+            <!-- Charts Grid -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
                     <h3 class="font-bold text-slate-800 dark:text-slate-100 mb-4 flex items-center text-sm">
@@ -256,13 +276,16 @@
             </div>
         </div>
 
+        <!-- VIEW 2: ISSUES TABLE & LIST -->
         <div id="view-issues" class="hidden space-y-4">
             <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 flex flex-wrap gap-3 items-center justify-between">
+                <!-- Search Input -->
                 <div class="flex-1 min-w-[240px] relative">
                     <i class="fa-solid fa-magnifying-glass absolute right-3.5 top-3 text-slate-400 text-xs"></i>
                     <input type="text" id="searchInput" oninput="renderIssues()" placeholder="بحث باسم العميل، الكود، الوسم (Tag)، أو المسؤول..." class="w-full pr-9 pl-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 </div>
 
+                <!-- Dropdown Filters & Quick Tag Filter -->
                 <div class="flex flex-wrap gap-2 items-center">
                     <select id="filterTag" onchange="renderIssues()" class="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500">
                         <option value="ALL">جميع الوسوم (Tags)</option>
@@ -290,10 +313,12 @@
                         <option value="🟢 Low">🟢 Low (منخفض)</option>
                     </select>
 
+                    <!-- Quick Export CSV Button -->
                     <button onclick="exportDataCSV()" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition shadow flex items-center gap-1.5" title="سحب تقرير اكسيل سريع">
                         <i class="fa-solid fa-file-excel"></i> <span>سحب تقرير CSV</span>
                     </button>
 
+                    <!-- Bulk Actions Button -->
                     <div id="bulkActionsWrapper" class="hidden flex items-center gap-2 bg-indigo-50 dark:bg-indigo-950/60 p-1 rounded-xl border border-indigo-200 dark:border-indigo-800">
                         <span id="selectedCount" class="text-xs font-bold text-indigo-700 dark:text-indigo-300 px-2">0 محدد</span>
                         <button onclick="bulkChangeStatus('Resolved')" class="px-2.5 py-1 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-700">تحويل المحدد إلى Resolved 🟢</button>
@@ -302,6 +327,7 @@
                 </div>
             </div>
 
+            <!-- Issues Table -->
             <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="w-full text-right text-xs sm:text-sm">
@@ -324,12 +350,14 @@
                             </tr>
                         </thead>
                         <tbody id="issuesTableBody" class="divide-y divide-slate-100 dark:divide-slate-700">
+                            <!-- Populated dynamically -->
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
 
+        <!-- VIEW 3: ADMIN PANEL -->
         <div id="view-admin" class="hidden space-y-6">
             <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-6 rounded-3xl border border-indigo-900/50 shadow-xl flex flex-wrap justify-between items-center gap-4">
                 <div>
@@ -349,6 +377,7 @@
                 </div>
             </div>
 
+            <!-- Admin Subtabs Navigation -->
             <div class="flex border-b border-slate-200 dark:border-slate-700 space-x-4 space-x-reverse text-xs font-bold">
                 <button onclick="switchAdminSubTab('users')" id="subtab-btn-users" class="pb-3 border-b-2 border-indigo-600 text-indigo-600 dark:text-indigo-400">
                     <i class="fa-solid fa-users ml-1"></i> إدارة الحسابات
@@ -370,6 +399,7 @@
                 </button>
             </div>
 
+            <!-- SUBTAB 1: USERS -->
             <div id="admin-users" class="space-y-4">
                 <div class="flex justify-between items-center">
                     <h3 class="font-bold text-slate-800 dark:text-slate-100 text-sm">الحسابات المسجلة للوصول إلى النظام</h3>
@@ -395,6 +425,7 @@
                 </div>
             </div>
 
+            <!-- SUBTAB: REPORTS CENTER -->
             <div id="admin-reports" class="hidden space-y-4">
                 <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-4">
                     <h3 class="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-2">
@@ -436,6 +467,7 @@
                 </div>
             </div>
 
+            <!-- SUBTAB 2: CATEGORIES & AUTO ASSIGNMENT & SLA -->
             <div id="admin-categories" class="hidden space-y-4">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-3">
@@ -478,6 +510,7 @@
                 </div>
             </div>
 
+            <!-- SUBTAB 3: SUPABASE CONFIGURATION -->
             <div id="admin-supabase" class="hidden space-y-4">
                 <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 space-y-4 max-w-2xl">
                     <h4 class="font-bold text-base text-slate-800 dark:text-slate-100 flex items-center gap-2">
@@ -506,6 +539,7 @@
                 </div>
             </div>
 
+            <!-- SUBTAB 4: CSAT DASHBOARD -->
             <div id="admin-csat" class="hidden space-y-4">
                 <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200 dark:border-slate-700 space-y-4">
                     <h4 class="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-2">
@@ -515,6 +549,7 @@
                 </div>
             </div>
 
+            <!-- SUBTAB 5: AUDIT LOGS -->
             <div id="admin-audit" class="hidden space-y-4">
                 <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-4">
                     <h4 class="font-bold text-xs text-slate-600 dark:text-slate-300 mb-3 flex items-center justify-between">
@@ -539,6 +574,7 @@
         </div>
     </main>
 
+    <!-- MODAL 1: ADD / EDIT ISSUE -->
     <div id="issueModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4 overflow-y-auto">
         <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden border border-slate-200 dark:border-slate-700 my-8">
             <div class="bg-slate-900 text-white px-6 py-4 flex justify-between items-center border-b border-slate-800">
@@ -579,6 +615,7 @@
                     <textarea id="issueDesc" rows="3" required placeholder="اكتب ملخص وفحوى المشكلة أو البلاغ..." class="w-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 rounded-xl px-3 py-2 text-xs font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none"></textarea>
                 </div>
 
+                <!-- Attachment Upload Input -->
                 <div>
                     <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">📎 مرفق/صورة للمشكلة</label>
                     <input type="file" id="issueAttachment" onchange="handleFileUpload(event, 'ticket')" accept="image/*,.pdf,.doc,.docx" class="w-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 rounded-xl px-3 py-1.5 text-xs">
@@ -629,6 +666,7 @@
         </div>
     </div>
 
+    <!-- MODAL 2: DETAILS, WORK TIMER, COMMENTS & PRINTABLE REPORT -->
     <div id="detailsModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4 overflow-y-auto">
         <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-3xl overflow-hidden border border-slate-200 dark:border-slate-700 my-8">
             <div class="bg-slate-900 text-white px-6 py-4 flex justify-between items-center border-b border-slate-800">
@@ -646,6 +684,7 @@
             </div>
 
             <div class="p-6 space-y-6" id="printable-report">
+                <!-- Work Timer & CSAT Toolbar (Auto-Starts upon opening) -->
                 <div class="bg-slate-900 text-white p-4 rounded-2xl flex flex-wrap items-center justify-between gap-3 shadow-inner">
                     <div class="flex items-center gap-3">
                         <div class="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-bold">
@@ -662,6 +701,7 @@
                     </div>
                 </div>
 
+                <!-- Details Grid Summary -->
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 text-xs">
                     <div>
                         <span class="text-slate-400 block font-semibold">نوع المشكلة</span>
@@ -687,6 +727,7 @@
                     <div id="detailAttachmentContainer" class="mt-2 hidden"></div>
                 </div>
 
+                <!-- CSAT Rating Widget -->
                 <div class="bg-amber-50 dark:bg-amber-950/30 p-3 rounded-2xl border border-amber-200 dark:border-amber-900/40 flex items-center justify-between">
                     <div>
                         <span class="font-bold text-xs text-amber-900 dark:text-amber-200 block">⭐ تقييم رضا العميل (CSAT)</span>
@@ -701,6 +742,7 @@
                     </div>
                 </div>
 
+                <!-- Comments & Timeline Section -->
                 <div class="border-t border-slate-200 dark:border-slate-700 pt-4 space-y-3">
                     <h4 class="font-bold text-xs text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
                         <i class="fa-solid fa-comments text-indigo-500"></i> سجل التعليقات والملاحظات والملفات المرفقة
@@ -708,6 +750,7 @@
 
                     <div id="commentsList" class="space-y-2 max-h-48 overflow-y-auto custom-scrollbar p-1"></div>
 
+                    <!-- Add Comment Box -->
                     <div class="space-y-2">
                         <div class="flex gap-2">
                             <input type="text" id="newCommentInput" placeholder="أضف تعليقاً أو تحديثاً جديداً..." class="flex-1 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none">
@@ -721,6 +764,7 @@
         </div>
     </div>
 
+    <!-- MODAL 3: CREATE / EDIT USER -->
     <div id="userModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
         <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200 dark:border-slate-700">
             <div class="bg-slate-900 text-white px-6 py-4 flex justify-between items-center border-b border-slate-800">
@@ -760,13 +804,19 @@
         </div>
     </div>
 
+    <!-- AUDIO NOTIFICATION SOUNDS -->
     <audio id="notifSound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
     <audio id="alarmSound" src="https://assets.mixkit.co/active_storage/sfx/995/995-preview.mp3" preload="auto" loop></audio>
 
     <script>
+        // ================= APPLICATION STATE STORES =================
         const STORAGE_KEY = 'ENTERPRISE_ISSUE_TRACKER_V6_SUPABASE';
 
-        let supabaseConfig = { url: '', key: '' };
+        // Updated Supabase credentials from user request
+        let supabaseConfig = { 
+            url: 'https://pgpoeqpvhzujzbuinsev.supabase.co', 
+            key: 'sb_publishable_m-YqP9wItm-2OuEXbfN3Mw_gQl3K4b3' 
+        };
         let supabaseClient = null;
 
         let defaultSlaRules = { Critical: 4, High: 12, Medium: 24, Low: 48 };
@@ -796,6 +846,7 @@
         let timerInterval = null;
         let timerSeconds = 0;
 
+        // Global Realtime Timer Variable for All Open Tickets
         let globalLiveTimerInterval = null;
 
         let issues = [
@@ -840,6 +891,7 @@
         let categoryChartInstance = null;
         let activeDetailIndex = null;
 
+        // ================= INITIALIZATION =================
         document.addEventListener("DOMContentLoaded", () => {
             loadFromLocalStorage();
             initSupabase();
@@ -850,6 +902,7 @@
             startGlobalLiveTimer();
         });
 
+        // Global Live Timer for all non-closed/resolved tickets in main screen
         function startGlobalLiveTimer() {
             if (globalLiveTimerInterval) clearInterval(globalLiveTimerInterval);
             globalLiveTimerInterval = setInterval(() => {
@@ -861,6 +914,7 @@
                     }
                 });
                 
+                // Keep active timer in sync if modal is open
                 if (activeDetailIndex !== null && issues[activeDetailIndex]) {
                     if (issues[activeDetailIndex].status !== 'Resolved' && issues[activeDetailIndex].status !== 'Closed') {
                         timerSeconds = issues[activeDetailIndex].workTime;
@@ -878,6 +932,7 @@
             }, 1000);
         }
 
+        // Fast DOM Update for workTime column in main table without full re-render
         function updateLiveWorkTimesUI() {
             const tbody = document.getElementById('issuesTableBody');
             if (!tbody) return;
@@ -915,11 +970,15 @@
                     if (parsed.notifications) notifications = parsed.notifications;
                     if (parsed.slaRules) defaultSlaRules = parsed.slaRules;
                     if (parsed.currentUser) currentUser = parsed.currentUser;
-                    if (parsed.supabaseConfig) supabaseConfig = parsed.supabaseConfig;
+                    // Ensure the provided credentials override if not set
+                    if (parsed.supabaseConfig && parsed.supabaseConfig.url) {
+                        supabaseConfig = parsed.supabaseConfig;
+                    }
                 } catch(e) { console.error("LocalStorage parse error", e); }
             }
         }
 
+        // ================= EXPORT & REPORT GENERATION FUNCTIONS =================
         function exportDataJSON() {
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(issues, null, 2));
             const dlAnchor = document.createElement('a');
@@ -937,7 +996,7 @@
                 return;
             }
 
-            let csvContent = "\uFEFF"; 
+            let csvContent = "\uFEFF"; // UTF-8 BOM for Arabic support in Excel
             csvContent += "كود المشكلة,اسم العميل,الوسم,نوع المشكلة,الوصف,المستلم,المسؤول الحالي,الأولوية,الحالة,الوقت المستغرق (ثواني),تقييم CSAT,تاريخ الإرسال\n";
 
             issues.forEach(item => {
@@ -1001,6 +1060,7 @@
             logAuditAction("تصدير تقرير SLA", "تم سحب تقرير التذاكر المتأخرة فقط");
         }
 
+        // ================= SUPABASE CLOUD INTEGRATION =================
         function initSupabase() {
             if (supabaseConfig.url && supabaseConfig.key) {
                 try {
@@ -1098,6 +1158,7 @@
             }
         }
 
+        // ================= AUTHENTICATION & SESSIONS =================
         function checkSession() {
             const overlay = document.getElementById('fullLoginOverlay');
             if (currentUser) {
@@ -1145,6 +1206,7 @@
             document.getElementById('userAvatar').innerText = currentUser.name.charAt(0);
         }
 
+        // ================= ALARMS & SLA VERIFICATION =================
         function playNotificationSound() {
             try { document.getElementById('notifSound').play(); } catch(e) {}
         }
@@ -1322,6 +1384,7 @@
             renderNotifications();
         }
 
+        // ================= Enhanced SLA / SLE Badge Logic =================
         function calculateSlaBadge(dateSentStr, priorityStr, statusStr) {
             if (statusStr === 'Resolved' || statusStr === 'Closed') {
                 return '<span class="bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 px-2 py-0.5 rounded text-[10px] font-bold">✅ تم الالتزام</span>';
@@ -1343,6 +1406,7 @@
                 const lateMins = Math.floor((Math.abs(remainingHours) - lateHrs) * 60);
                 return `<span class="bg-rose-600 text-white px-2 py-0.5 rounded text-[10px] font-bold animate-pulse shadow">⚠️ متأخر (${lateHrs}س ${lateMins}د)</span>`;
             } else if (remainingHours <= 2) {
+                // Warning state for near-breach (SLE Enhancement)
                 const remHrs = Math.floor(remainingHours);
                 const remMins = Math.floor((remainingHours - remHrs) * 60);
                 return `<span class="bg-amber-500 text-white px-2 py-0.5 rounded text-[10px] font-bold shadow">⏳ ينتهي قريباً (${remHrs}س ${remMins}د)</span>`;
@@ -1500,8 +1564,10 @@
             });
         }
 
+        // ================= AUTO ROUTING & FILE ATTACHMENTS =================
         function populateCategoryDropdowns() {
             const select = document.getElementById('issueType');
+            if(!select) return;
             select.innerHTML = '';
             categories.forEach(cat => {
                 const opt = document.createElement('option');
@@ -1513,7 +1579,9 @@
         }
 
         function autoRouteAssignee() {
-            const selectedType = document.getElementById('issueType').value;
+            const select = document.getElementById('issueType');
+            if (!select) return;
+            const selectedType = select.value;
             const matchedCat = categories.find(c => c.name === selectedType);
             if (matchedCat) {
                 document.getElementById('assignedTo').value = matchedCat.assigned;
@@ -1631,6 +1699,7 @@
             }
         }
 
+        // ================= DETAILS, AUTOMATIC WORK TIMER, CSAT & PDF REPORT =================
         function openDetailsModal(index) {
             activeDetailIndex = index;
             const item = issues[index];
@@ -1644,6 +1713,7 @@
             document.getElementById('detailOwner').innerText = item.owner;
             document.getElementById('detailDesc').innerText = item.desc;
 
+            // Render Attachment
             const attachContainer = document.getElementById('detailAttachmentContainer');
             if (item.attachment) {
                 attachContainer.classList.remove('hidden');
@@ -1656,11 +1726,16 @@
                 attachContainer.classList.add('hidden');
             }
 
+            // Timer Setup & AUTOMATIC START UPON TICKET OPENING
             timerSeconds = item.workTime || 0;
             document.getElementById('timerDisplay').innerText = formatSecondsToHMS(timerSeconds);
             
+            // Start Timer Immediately upon opening the modal
             startWorkTimer();
+
+            // CSAT Stars setup
             setCsatRatingUI(item.csat || 5);
+
             renderCommentsList(item.comments || []);
             document.getElementById('detailsModal').classList.remove('hidden');
             document.getElementById('detailsModal').classList.add('flex');
@@ -1782,6 +1857,7 @@
             window.print();
         }
 
+        // ================= BULK ACTIONS =================
         function toggleSelectAll(master) {
             const checkboxes = document.querySelectorAll('.issue-checkbox');
             checkboxes.forEach(cb => cb.checked = master.checked);
@@ -1824,7 +1900,7 @@
             if (confirm(`هل أنت تأكد من حذف (${selected.length}) تذكرة محددة؟`)) {
                 const indices = Array.from(selected).map(cb => parseInt(cb.value)).sort((a,b) => b - a);
                 indices.forEach(idx => {
-                    issues.splice(idx, 1);
+                    if (issues[idx]) issues.splice(idx, 1);
                 });
                 saveToLocalStorage();
                 renderAll();
@@ -1833,7 +1909,8 @@
             }
         }
 
-        function switchAdminSubTab(subtab) {
+        // ================= ADMIN PANEL CONTROLS =================
+        function switchAdminSubTab(sub) {
             const tabs = ['users', 'reports', 'categories', 'supabase', 'csat', 'audit'];
             tabs.forEach(t => {
                 const el = document.getElementById(`admin-${t}`);
@@ -1842,44 +1919,41 @@
                 if (btn) btn.className = "pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200";
             });
 
-            const activeEl = document.getElementById(`admin-${subtab}`);
-            const activeBtn = document.getElementById(`subtab-btn-${subtab}`);
+            const activeEl = document.getElementById(`admin-${sub}`);
+            const activeBtn = document.getElementById(`subtab-btn-${sub}`);
             if (activeEl) activeEl.classList.remove('hidden');
-            if (activeBtn) activeBtn.className = "pb-3 border-b-2 border-indigo-600 text-indigo-600 dark:text-indigo-400";
+            if (activeBtn) activeBtn.className = "pb-3 border-b-2 border-indigo-600 text-indigo-600 dark:text-indigo-400 font-bold";
 
-            if (subtab === 'users') renderUsersTable();
-            if (subtab === 'categories') renderCategoriesList();
-            if (subtab === 'csat') renderCsatList();
-            if (subtab === 'audit') renderAuditLogs();
+            if (sub === 'users') renderUsers();
+            else if (sub === 'categories') renderCategories();
+            else if (sub === 'csat') renderCsatList();
+            else if (sub === 'audit') renderAuditLogs();
         }
 
         function renderAdmin() {
-            renderUsersTable();
-            renderCategoriesList();
-            renderCsatList();
-            renderAuditLogs();
+            switchAdminSubTab('users');
             document.getElementById('slaCritical').value = defaultSlaRules.Critical;
             document.getElementById('slaHigh').value = defaultSlaRules.High;
             document.getElementById('slaMedium').value = defaultSlaRules.Medium;
             document.getElementById('slaLow').value = defaultSlaRules.Low;
         }
 
-        function renderUsersTable() {
+        function renderUsers() {
             const tbody = document.getElementById('usersTableBody');
-            if(!tbody) return;
+            if (!tbody) return;
             tbody.innerHTML = '';
-            users.forEach((u, index) => {
+            users.forEach((u, i) => {
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-slate-50 dark:hover:bg-slate-700/50";
                 tr.innerHTML = `
-                    <td class="p-3 font-bold text-slate-800 dark:text-slate-100">${u.name}</td>
-                    <td class="p-3 font-mono text-indigo-600 dark:text-indigo-400 font-bold">${u.username}</td>
-                    <td class="p-3 font-mono text-slate-400">••••••••</td>
+                    <td class="p-3 font-bold">${u.name}</td>
+                    <td class="p-3 font-mono">${u.username}</td>
+                    <td class="p-3 font-mono">••••••••</td>
                     <td class="p-3 text-slate-500">${u.email}</td>
-                    <td class="p-3"><span class="bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded text-xs font-bold">${u.role}</span></td>
+                    <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${u.role === 'Admin' ? 'bg-amber-100 text-amber-800' : 'bg-indigo-100 text-indigo-800'}">${u.role}</span></td>
                     <td class="p-3 text-center space-x-1 space-x-reverse">
-                        <button onclick="editUser(${index})" class="text-amber-500 hover:text-amber-700 p-1"><i class="fa-solid fa-pen-to-square"></i></button>
-                        <button onclick="deleteUser(${index})" class="text-rose-500 hover:text-rose-700 p-1"><i class="fa-solid fa-trash"></i></button>
+                        <button onclick="editUser(${i})" class="text-amber-500 hover:text-amber-700 p-1"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="deleteUser(${i})" class="text-rose-500 hover:text-rose-700 p-1"><i class="fa-solid fa-trash"></i></button>
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -1901,8 +1975,8 @@
 
         function saveUser(e) {
             e.preventDefault();
-            const index = document.getElementById('userEditIndex').value;
-            const uData = {
+            const idx = document.getElementById('userEditIndex').value;
+            const userData = {
                 name: document.getElementById('addUserName').value.trim(),
                 username: document.getElementById('addUserUsername').value.trim(),
                 password: document.getElementById('addUserPassword').value.trim(),
@@ -1910,15 +1984,17 @@
                 role: document.getElementById('addUserRole').value
             };
 
-            if (index !== '') {
-                users[index] = uData;
+            if (idx !== '') {
+                users[idx] = userData;
+                logAuditAction("تعديل مستخدم", `تم تعديل بيانات الحساب ${userData.username}`);
             } else {
-                users.push(uData);
+                users.push(userData);
+                logAuditAction("إضافة مستخدم", `تم إنشاء حساب جديد ${userData.username}`);
             }
 
             saveToLocalStorage();
             closeUserModal();
-            renderUsersTable();
+            renderUsers();
         }
 
         function editUser(index) {
@@ -1929,22 +2005,40 @@
             document.getElementById('addUserPassword').value = u.password;
             document.getElementById('addUserEmail').value = u.email;
             document.getElementById('addUserRole').value = u.role;
-
-            document.getElementById('userModalTitle').innerText = 'تعديل بيانات الحساب';
+            document.getElementById('userModalTitle').innerText = 'تعديل حساب المستخدم';
             document.getElementById('userModal').classList.remove('hidden');
             document.getElementById('userModal').classList.add('flex');
         }
 
         function deleteUser(index) {
             if (users.length <= 1) {
-                alert("لا يمكن حذف آخر حساب إدمن بالنظام!");
+                alert("لا يمكن حذف الحساب الأخير بالمنظومة!");
                 return;
             }
-            if (confirm("هل أنت تأكد من حذف هذا الحساب؟")) {
-                users.splice(index, 1);
+            if (confirm("هل تريد حذف هذا الحساب؟")) {
+                const removed = users.splice(index, 1);
+                logAuditAction("حذف مستخدم", `تم حذف الحساب ${removed[0].username}`);
                 saveToLocalStorage();
-                renderUsersTable();
+                renderUsers();
             }
+        }
+
+        function renderCategories() {
+            const list = document.getElementById('categoriesList');
+            if (!list) return;
+            list.innerHTML = '';
+            categories.forEach((c, idx) => {
+                const li = document.createElement('li');
+                li.className = "py-2 flex justify-between items-center";
+                li.innerHTML = `
+                    <div>
+                        <span class="font-bold block">${c.name}</span>
+                        <span class="text-[10px] text-slate-400">فريق: ${c.assigned} | مسؤول: ${c.owner}</span>
+                    </div>
+                    <button onclick="deleteCategory(${idx})" class="text-rose-500 hover:text-rose-700 text-xs"><i class="fa-solid fa-trash"></i></button>
+                `;
+                list.appendChild(li);
+            });
         }
 
         function addCategory() {
@@ -1953,7 +2047,7 @@
             const owner = document.getElementById('newCatOwnerInput').value.trim();
 
             if (!name || !assigned || !owner) {
-                alert("يرجى ملء جميع الحقول للقسم والتعيين التلقائي!");
+                alert("يرجى ملء جميع بيانات القسم الجديد!");
                 return;
             }
 
@@ -1963,39 +2057,17 @@
             document.getElementById('newCatOwnerInput').value = '';
 
             saveToLocalStorage();
-            renderCategoriesList();
+            renderCategories();
             populateCategoryDropdowns();
         }
 
         function deleteCategory(index) {
-            if (categories.length <= 1) {
-                alert("يجب أن يتبقى قسم واحد على الأقل بالنظام!");
-                return;
-            }
-            if (confirm("هل أنت تأكد من حذف هذا القسم؟")) {
+            if (confirm("هل تريد حذف هذا القسم؟")) {
                 categories.splice(index, 1);
                 saveToLocalStorage();
-                renderCategoriesList();
+                renderCategories();
                 populateCategoryDropdowns();
             }
-        }
-
-        function renderCategoriesList() {
-            const list = document.getElementById('categoriesList');
-            if(!list) return;
-            list.innerHTML = '';
-            categories.forEach((cat, idx) => {
-                const li = document.createElement('li');
-                li.className = "py-2 flex justify-between items-center";
-                li.innerHTML = `
-                    <div>
-                        <span class="font-bold text-slate-800 dark:text-slate-100">${cat.name}</span>
-                        <p class="text-[10px] text-slate-400">فريق: ${cat.assigned} | مسؤول: ${cat.owner}</p>
-                    </div>
-                    <button onclick="deleteCategory(${idx})" class="text-rose-500 hover:text-rose-700 text-xs"><i class="fa-solid fa-trash"></i></button>
-                `;
-                list.appendChild(li);
-            });
         }
 
         function saveSlaRules() {
@@ -2005,39 +2077,40 @@
             defaultSlaRules.Low = parseInt(document.getElementById('slaLow').value) || 48;
 
             saveToLocalStorage();
+            alert("تم حفظ قواعد ومهل SLA الجديدة بنجاح!");
             renderIssues();
             checkSlaExceededNotifications();
-            alert("تم حفظ قواعد SLA المحدثة بنجاح!");
         }
 
         function renderCsatList() {
             const container = document.getElementById('csatList');
-            if(!container) return;
+            if (!container) return;
             container.innerHTML = '';
 
-            const rated = issues.filter(i => i.csat);
-            if (rated.length === 0) {
-                container.innerHTML = '<p class="text-xs text-slate-400 text-center py-4">لا توجد تقييمات مسجلة بعد</p>';
-                return;
-            }
+            issues.forEach(i => {
+                if (i.csat) {
+                    let starsHtml = '';
+                    for (let s = 1; s <= 5; s++) {
+                        starsHtml += s <= i.csat ? '<i class="fa-solid fa-star text-amber-400"></i>' : '<i class="fa-regular fa-star text-slate-300"></i>';
+                    }
 
-            rated.forEach(item => {
-                let stars = '';
-                for(let i=1; i<=5; i++) {
-                    stars += i <= item.csat ? '<i class="fa-solid fa-star text-amber-400"></i>' : '<i class="fa-regular fa-star text-amber-400"></i>';
+                    const div = document.createElement('div');
+                    div.className = "p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 flex justify-between items-center text-xs";
+                    div.innerHTML = `
+                        <div>
+                            <span class="font-bold text-indigo-500 font-mono">${i.id}</span>
+                            <span class="font-bold text-slate-800 dark:text-slate-100 mr-2">${i.client}</span>
+                            <span class="text-slate-400 text-[10px] block mt-0.5">${i.type} - مسؤول: ${i.owner}</span>
+                        </div>
+                        <div class="text-sm flex items-center gap-1">${starsHtml} <span class="font-bold text-amber-500 mr-1">(${i.csat}/5)</span></div>
+                    `;
+                    container.appendChild(div);
                 }
-
-                const div = document.createElement('div');
-                div.className = "bg-slate-50 dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-700 flex justify-between items-center text-xs";
-                div.innerHTML = `
-                    <div>
-                        <span class="font-bold text-indigo-500">${item.id}</span> - <span class="font-extrabold">${item.client}</span>
-                        <p class="text-[10px] text-slate-400">المسؤول: ${item.owner}</p>
-                    </div>
-                    <div class="flex items-center gap-1 text-sm">${stars} <span class="font-bold mr-1 text-slate-600 dark:text-slate-300">(${item.csat}.0)</span></div>
-                `;
-                container.appendChild(div);
             });
+
+            if (container.children.length === 0) {
+                container.innerHTML = '<p class="text-xs text-slate-400 text-center py-4">لا توجد تقييمات مسجلة بعد</p>';
+            }
         }
     </script>
 </body>
