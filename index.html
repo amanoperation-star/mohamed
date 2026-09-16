@@ -483,7 +483,7 @@
                     <h4 class="font-bold text-base text-slate-800 dark:text-slate-100 flex items-center gap-2">
                         <i class="fa-solid fa-cloud text-emerald-500"></i> إعدادات الربط مع قاعدة بيانات Supabase
                     </h4>
-                    <p class="text-xs text-slate-500 leading-relaxed">أدخل بيانات المشروع الخاص بك من لوحة التحكم في Supabase لتمكين المزامنة الفورية السحابية لجميع التذاكر والمستخدمين عبر الأجهزة المختلفة.</p>
+                    <p class="text-xs text-slate-500 leading-relaxed">أدخل بيانات المشروع الخاص بك من لوحة التحكم في Supabase لتمكين المزامنة الفورية السحابية لجميع التذاكر والمستخدمين والإعدادات عبر الأجهزة المختلفة.</p>
                     
                     <div class="space-y-3 text-xs">
                         <div>
@@ -788,7 +788,7 @@
         let notifications = [];
 
         let auditLogs = [
-            { time: new Date().toLocaleString('ar-EG'), user: "System", action: "تشغيل المنظومة المحدثة", details: "تم تحميل النسخة المتطورة + مزامنة Supabase" }
+            { time: new Date().toLocaleString('ar-EG'), user: "System", action: "تشغيل المنظومة المحدثة", details: "تم تحميل النسخة المتطورة + مزامنة Supabase الكاملة" }
         ];
 
         let tempTicketAttachment = null;
@@ -1010,6 +1010,7 @@
         async function syncToSupabaseCloud() {
             if (!supabaseClient) return;
             try {
+                // 1. رفع المشاكل (issues)
                 const rows = issues.map(item => ({
                     id: item.id,
                     client: item.client,
@@ -1026,9 +1027,18 @@
                     comments: item.comments,
                     attachment: item.attachment
                 }));
+                const { error: errIssues } = await supabaseClient.from('issues').upsert(rows, { onConflict: 'id' });
+                if (errIssues) console.error("Supabase Issues Push Error:", errIssues);
 
-                const { error } = await supabaseClient.from('issues').upsert(rows, { onConflict: 'id' });
-                if (error) console.error("Supabase Push Error:", error);
+                // 2. رفع الإعدادات (app_settings)
+                const settingsRow = {
+                    id: 'global',
+                    categories: categories,
+                    sla_rules: defaultSlaRules
+                };
+                const { error: errSettings } = await supabaseClient.from('app_settings').upsert([settingsRow], { onConflict: 'id' });
+                if (errSettings) console.error("Supabase Settings Push Error:", errSettings);
+
             } catch(e) { console.error("Supabase sync exception:", e); }
         }
 
@@ -1038,10 +1048,11 @@
                 return;
             }
             try {
-                const { data, error } = await supabaseClient.from('issues').select('*');
-                if (error) throw error;
-                if (data && data.length > 0) {
-                    issues = data.map(item => ({
+                // 1. جلب المشاكل
+                const { data: issuesData, error: errIssues } = await supabaseClient.from('issues').select('*');
+                if (errIssues) throw errIssues;
+                if (issuesData && issuesData.length > 0) {
+                    issues = issuesData.map(item => ({
                         id: item.id,
                         client: item.client,
                         tag: item.tag,
@@ -1057,13 +1068,38 @@
                         comments: item.comments || [],
                         attachment: item.attachment || null
                     }));
-                    saveToLocalStorage(false);
-                    renderAll();
-                    if (!silent) alert(`تم جلب ${data.length} تذكرة بنجاح من السحابة!`);
                 }
+
+                // 2. جلب المستخدمين
+                await fetchUsersFromSupabaseCloud();
+
+                // 3. جلب الأقسام وقواعد SLA من app_settings
+                const { data: settingsData, error: errSettings } = await supabaseClient.from('app_settings').select('*').eq('id', 'global').single();
+                if (!errSettings && settingsData) {
+                    if (settingsData.categories) categories = settingsData.categories;
+                    if (settingsData.sla_rules) defaultSlaRules = settingsData.sla_rules;
+                    populateCategoryDropdowns();
+                }
+
+                saveToLocalStorage(false);
+                renderAll();
+                if (!silent) alert(`تم جلب البيانات الحية والحسابات بنجاح من السحابة!`);
             } catch(e) {
                 if (!silent) alert("خطأ أثناء جلب البيانات: " + e.message);
             }
+        }
+
+        async function fetchUsersFromSupabaseCloud() {
+            if (!supabaseClient) return;
+            try {
+                const { data, error } = await supabaseClient.from('users').select('*');
+                if (error) throw error;
+                if (data && data.length > 0) {
+                    users = data;
+                    saveToLocalStorage(false);
+                    renderUsersTable();
+                }
+            } catch(e) { console.error("Cloud Users Fetch Error:", e); }
         }
 
         function checkSession() {
@@ -1878,7 +1914,7 @@
             document.getElementById('userModal').classList.remove('flex');
         }
 
-        function saveUser(e) {
+        async function saveUser(e) {
             e.preventDefault();
             const index = document.getElementById('userEditIndex').value;
             const uData = {
@@ -1898,6 +1934,14 @@
             saveToLocalStorage(false);
             closeUserModal();
             renderUsersTable();
+
+            if (supabaseClient) {
+                try {
+                    const { error } = await supabaseClient.from('users').upsert([uData], { onConflict: 'username' });
+                    if (error) console.error("User Cloud Save Error:", error);
+                    else logAuditAction("حفظ مستخدم", `تمت مزامنة المستخدم ${uData.username} سحابياً`);
+                } catch(err) { console.error(err); }
+            }
         }
 
         function editUser(index) {
@@ -1914,12 +1958,18 @@
             document.getElementById('userModal').classList.add('flex');
         }
 
-        function deleteUser(index) {
+        async function deleteUser(index) {
             if (users.length <= 1) {
                 alert("لا يمكن حذف آخر حساب إدمن بالنظام!");
                 return;
             }
+            const targetUser = users[index];
             if (confirm("هل أنت تأكد من حذف هذا الحساب؟")) {
+                if (supabaseClient) {
+                    try {
+                        await supabaseClient.from('users').delete().eq('username', targetUser.username);
+                    } catch(e) { console.error("User Cloud Delete Error:", e); }
+                }
                 users.splice(index, 1);
                 saveToLocalStorage(false);
                 renderUsersTable();
@@ -1941,7 +1991,7 @@
             document.getElementById('newCatAssignInput').value = '';
             document.getElementById('newCatOwnerInput').value = '';
 
-            saveToLocalStorage(false);
+            saveToLocalStorage(true);
             renderCategoriesList();
             populateCategoryDropdowns();
         }
@@ -1953,7 +2003,7 @@
             }
             if (confirm("هل أنت تأكد من حذف هذا القسم؟")) {
                 categories.splice(index, 1);
-                saveToLocalStorage(false);
+                saveToLocalStorage(true);
                 renderCategoriesList();
                 populateCategoryDropdowns();
             }
@@ -1983,10 +2033,10 @@
             defaultSlaRules.Medium = parseInt(document.getElementById('slaMedium').value) || 24;
             defaultSlaRules.Low = parseInt(document.getElementById('slaLow').value) || 48;
 
-            saveToLocalStorage(false);
+            saveToLocalStorage(true);
             renderIssues();
             checkSlaExceededNotifications();
-            alert("تم حفظ قواعد SLA المحدثة بنجاح!");
+            alert("تم حفظ قواعد SLA المحدثة بنجاح ومزامنتها سحابياً!");
         }
 
         function renderCsatList() {
