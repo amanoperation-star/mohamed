@@ -27,8 +27,8 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(156, 163, 175, 0.4); border-radius: 9999px; }
         @keyframes pulse-red {
-            0%, 100% { background-color: rgba(225, 29, 72, 0.2); }
-            50% { background-color: rgba(225, 29, 72, 0.6); }
+            0%, 100% { background-color: rgba(225, 29, 72, 0.9); }
+            50% { background-color: rgba(159, 18, 57, 0.95); }
         }
         .alarm-active { animation: pulse-red 1.5s infinite; }
         @media print {
@@ -40,16 +40,23 @@
 </head>
 <body class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col transition-colors duration-200">
 
+    <!-- شريط التنبيه العاجل مع إضافة زر الإغلاق المباشر -->
     <div id="slaAlarmBanner" class="hidden bg-rose-600 text-white px-4 py-2 text-xs font-black flex justify-between items-center shadow-lg border-b border-rose-700 animate-pulse z-50">
         <div class="flex items-center gap-2">
             <i class="fa-solid fa-triangle-exclamation text-amber-300 text-lg"></i>
             <span id="slaAlarmMessage">تنبيه عاجل: توجد تذاكر متأخرة تجاوزت اتفاقية مستوى الخدمة (SLA)!</span>
         </div>
-        <button onclick="switchTab('issues')" class="bg-white text-rose-700 px-3 py-1 rounded-lg hover:bg-rose-100 transition shadow font-bold text-[11px]">
-            عرض التذاكر المتأخرة <i class="fa-solid fa-arrow-left mr-1"></i>
-        </button>
+        <div class="flex items-center gap-2">
+            <button onclick="switchTab('issues')" class="bg-white text-rose-700 px-3 py-1 rounded-lg hover:bg-rose-100 transition shadow font-bold text-[11px]">
+                عرض التذاكر المتأخرة <i class="fa-solid fa-arrow-left mr-1"></i>
+            </button>
+            <button onclick="closeAlarmBanner()" class="bg-rose-800 hover:bg-rose-900 text-white w-7 h-7 rounded-lg flex items-center justify-center transition" title="إغلاق التنبيه">
+                <i class="fa-solid fa-xmark text-sm"></i>
+            </button>
+        </div>
     </div>
 
+    <!-- تسجيل الدخول -->
     <div id="fullLoginOverlay" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex items-center justify-center p-4">
         <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200 dark:border-slate-700">
             <div class="bg-gradient-to-r from-indigo-900 via-slate-900 to-indigo-950 text-white p-6 text-center relative">
@@ -94,6 +101,7 @@
         </div>
     </div>
 
+    <!-- Header -->
     <header class="bg-slate-900 text-white shadow-xl sticky top-0 z-40 border-b border-slate-800">
         <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-3">
             <div class="flex items-center space-x-3 space-x-reverse">
@@ -164,6 +172,7 @@
 
     <main class="max-w-7xl mx-auto px-4 py-6 flex-grow w-full space-y-6">
 
+        <!-- Dashboard View -->
         <div id="view-dashboard" class="space-y-6">
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 flex items-center justify-between">
@@ -256,6 +265,7 @@
             </div>
         </div>
 
+        <!-- Issues View -->
         <div id="view-issues" class="hidden space-y-4">
             <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 flex flex-wrap gap-3 items-center justify-between">
                 <div class="flex-1 min-w-[240px] relative">
@@ -265,12 +275,6 @@
 
                 <div class="flex flex-wrap gap-2 items-center">
                     <select id="filterTag" onchange="renderIssues()" class="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        <option value="ALL">جميع الوسوم (Tags)</option>
-                        <option value="VIP Client">VIP Client</option>
-                        <option value="Hardware">Hardware</option>
-                        <option value="Software">Software</option>
-                        <option value="Bug">Bug</option>
-                        <option value="Network">Network</option>
                     </select>
 
                     <select id="filterStatus" onchange="renderIssues()" class="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500">
@@ -330,14 +334,15 @@
             </div>
         </div>
 
+        <!-- Admin View -->
         <div id="view-admin" class="hidden space-y-6">
             <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-6 rounded-3xl border border-indigo-900/50 shadow-xl flex flex-wrap justify-between items-center gap-4">
                 <div>
                     <span class="bg-amber-500/20 text-amber-300 border border-amber-500/30 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider mb-2 inline-block">
                         <i class="fa-solid fa-shield-halved ml-1"></i> منطقة الإدارة الكاملة (Admin Zone)
                     </span>
-                    <h2 class="text-xl font-black">لوحة التحكم وإدارة الحسابات وربط السحابة Supabase</h2>
-                    <p class="text-xs text-slate-300 mt-1">تتيح لك إدارة الحسابات، ضبط إعدادات Supabase، التعيين التلقائي ومتابعة تقييمات (CSAT).</p>
+                    <h2 class="text-xl font-black">لوحة التحكم وإدارة الحسابات والوسوم والتنبيهات</h2>
+                    <p class="text-xs text-slate-300 mt-1">تتيح لك التحكم بالوسوم، التنبيهات الصوتية، ربط السحابة Supabase، والتقرير الشامل.</p>
                 </div>
                 <div class="flex items-center gap-2">
                     <button onclick="exportDataJSON()" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition shadow">
@@ -349,27 +354,37 @@
                 </div>
             </div>
 
-            <div class="flex border-b border-slate-200 dark:border-slate-700 space-x-4 space-x-reverse text-xs font-bold">
-                <button onclick="switchAdminSubTab('users')" id="subtab-btn-users" class="pb-3 border-b-2 border-indigo-600 text-indigo-600 dark:text-indigo-400">
+            <div class="flex border-b border-slate-200 dark:border-slate-700 space-x-4 space-x-reverse text-xs font-bold overflow-x-auto custom-scrollbar pb-1">
+                <button onclick="switchAdminSubTab('users')" id="subtab-btn-users" class="pb-3 border-b-2 border-indigo-600 text-indigo-600 dark:text-indigo-400 whitespace-nowrap">
                     <i class="fa-solid fa-users ml-1"></i> إدارة الحسابات
                 </button>
-                <button onclick="switchAdminSubTab('reports')" id="subtab-btn-reports" class="pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200">
-                    <i class="fa-solid fa-file-invoice ml-1 text-emerald-400"></i> قسم التقارير المتقدمة
+                <button onclick="switchAdminSubTab('tags')" id="subtab-btn-tags" class="pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 whitespace-nowrap">
+                    <i class="fa-solid fa-tags ml-1 text-indigo-400"></i> إدارة الوسوم (Tags)
                 </button>
-                <button onclick="switchAdminSubTab('categories')" id="subtab-btn-categories" class="pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200">
-                    <i class="fa-solid fa-tags ml-1"></i> الأقسام والتوجيه الآلي و SLA
+                <button onclick="switchAdminSubTab('audio')" id="subtab-btn-audio" class="pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 whitespace-nowrap">
+                    <i class="fa-solid fa-bell ml-1 text-rose-400"></i> الصوت والتنبيهات 🔔
                 </button>
-                <button onclick="switchAdminSubTab('supabase')" id="subtab-btn-supabase" class="pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200">
-                    <i class="fa-solid fa-cloud ml-1 text-emerald-400"></i> مزامنة Supabase Cloud
+                <button onclick="switchAdminSubTab('reports')" id="subtab-btn-reports" class="pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 whitespace-nowrap">
+                    <i class="fa-solid fa-file-invoice ml-1 text-emerald-400"></i> التقارير المتقدمة
                 </button>
-                <button onclick="switchAdminSubTab('csat')" id="subtab-btn-csat" class="pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200">
-                    <i class="fa-solid fa-star ml-1 text-amber-400"></i> تقييمات رضا العملاء (CSAT)
+                <button onclick="switchAdminSubTab('categories')" id="subtab-btn-categories" class="pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 whitespace-nowrap">
+                    <i class="fa-solid fa-sitemap ml-1"></i> الأقسام و SLA
                 </button>
-                <button onclick="switchAdminSubTab('audit')" id="subtab-btn-audit" class="pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200">
-                    <i class="fa-solid fa-history ml-1"></i> سجل النشاطات (Audit Logs)
+                <button onclick="switchAdminSubTab('cannedResponses')" id="subtab-btn-cannedResponses" class="pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 whitespace-nowrap">
+                    <i class="fa-solid fa-bolt ml-1 text-amber-400"></i> الردود السريعة
+                </button>
+                <button onclick="switchAdminSubTab('supabase')" id="subtab-btn-supabase" class="pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 whitespace-nowrap">
+                    <i class="fa-solid fa-cloud ml-1 text-emerald-400"></i> Supabase Cloud
+                </button>
+                <button onclick="switchAdminSubTab('csat')" id="subtab-btn-csat" class="pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 whitespace-nowrap">
+                    <i class="fa-solid fa-star ml-1 text-amber-400"></i> تقييمات (CSAT)
+                </button>
+                <button onclick="switchAdminSubTab('audit')" id="subtab-btn-audit" class="pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 whitespace-nowrap">
+                    <i class="fa-solid fa-history ml-1"></i> سجل النشاطات
                 </button>
             </div>
 
+            <!-- Users Tab -->
             <div id="admin-users" class="space-y-4">
                 <div class="flex justify-between items-center">
                     <h3 class="font-bold text-slate-800 dark:text-slate-100 text-sm">الحسابات المسجلة للوصول إلى النظام</h3>
@@ -395,6 +410,63 @@
                 </div>
             </div>
 
+            <!-- TAGS MANAGEMENT TAB -->
+            <div id="admin-tags" class="hidden space-y-4">
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-4">
+                    <h4 class="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                        <i class="fa-solid fa-tags text-indigo-500"></i> إدارة وإضافة الوسوم (Tags)
+                    </h4>
+                    <p class="text-xs text-slate-500">أضف أو عدل الوسوم التي تُستخدم لتصنيف المشاكل وتسهيل عملية الفلترة.</p>
+                    
+                    <div class="flex gap-2">
+                        <input type="text" id="newTagInput" placeholder="اسم الوسم الجديد (مثال: Server Issues, Urgent Client...)" class="flex-1 border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2 text-xs bg-slate-50 dark:bg-slate-900 font-semibold">
+                        <button onclick="addNewTag()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition">إضافة وسم جديد</button>
+                    </div>
+
+                    <div id="tagsListContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-2">
+                    </div>
+                </div>
+            </div>
+
+            <!-- CRITICAL SOUND & ALERT DESIGN TAB -->
+            <div id="admin-audio" class="hidden space-y-4">
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-5">
+                    <h4 class="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                        <i class="fa-solid fa-bell text-rose-500"></i> التحكم في صوت وشكل التكت الحرج والتنبيهات
+                    </h4>
+                    <p class="text-xs text-slate-500">خصص صوت الصفارة ومظهر التنبيه الذي يظهر أعلى الشاشة للتذاكر المتأخرة والحرجة.</p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3">
+                            <h5 class="font-bold text-xs text-slate-700 dark:text-slate-200"><i class="fa-solid fa-volume-high text-indigo-500 ml-1"></i> إعدادات الصوت:</h5>
+                            <div>
+                                <label class="block text-[11px] text-slate-400 mb-1">رابط صوت التنبيه والحرج (URL):</label>
+                                <input type="text" id="alarmSoundUrlInput" class="w-full border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-1.5 text-xs bg-white dark:bg-slate-800 font-mono">
+                            </div>
+                            <div class="flex items-center gap-2 pt-1">
+                                <button onclick="testAlarmSound()" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-bold transition flex items-center gap-1">
+                                    <i class="fa-solid fa-play"></i> تجربة الصوت
+                                </button>
+                                <button onclick="toggleMuteSound()" id="btnMuteToggle" class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-xs font-bold transition">
+                                    صوت التنبيه: مفعّل 🔊
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3">
+                            <h5 class="font-bold text-xs text-slate-700 dark:text-slate-200"><i class="fa-solid fa-paint-brush text-rose-500 ml-1"></i> مظهر شريط التنبيه العلوي:</h5>
+                            <div class="flex items-center gap-2">
+                                <button onclick="changeAlarmStyle('pulse-red')" class="px-3 py-2 bg-rose-600 text-white rounded-xl text-xs font-bold shadow hover:bg-rose-700">أحمر نيون (أصلي)</button>
+                                <button onclick="changeAlarmStyle('dark-rose')" class="px-3 py-2 bg-rose-950 border border-rose-700 text-rose-200 rounded-xl text-xs font-bold hover:bg-rose-900">عنابي هادئ</button>
+                                <button onclick="changeAlarmStyle('amber-warning')" class="px-3 py-2 bg-amber-500 text-slate-950 rounded-xl text-xs font-bold hover:bg-amber-400">أصفر تحذيري</button>
+                            </div>
+                            <button onclick="saveAudioSettings()" class="w-full mt-2 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition">حفظ إعدادات الصوت والشكل</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reports Tab -->
             <div id="admin-reports" class="hidden space-y-4">
                 <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-4">
                     <h3 class="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-2">
@@ -436,6 +508,7 @@
                 </div>
             </div>
 
+            <!-- Categories & SLA Tab -->
             <div id="admin-categories" class="hidden space-y-4">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-3">
@@ -478,6 +551,22 @@
                 </div>
             </div>
 
+            <!-- Canned Responses Tab -->
+            <div id="admin-cannedResponses" class="hidden space-y-4">
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-4">
+                    <h4 class="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                        <i class="fa-solid fa-bolt text-amber-400"></i> إدارة الردود السريعة الديناميكية (Canned Responses)
+                    </h4>
+                    <p class="text-xs text-slate-500">إضافة وتعديل الردود والأنماط الجاهزة التي يستعين بها موظفو الدعم الفني عند التعليق وإغلاق التذاكر.</p>
+                    <div class="flex gap-2">
+                        <input type="text" id="newCannedResponseInput" placeholder="أدخل نص الرد السريع الجديد..." class="flex-1 border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2 text-xs bg-slate-50 dark:bg-slate-900">
+                        <button onclick="addCannedResponse()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition">إضافة الرد</button>
+                    </div>
+                    <div id="cannedResponsesAdminList" class="space-y-2 max-h-80 overflow-y-auto custom-scrollbar"></div>
+                </div>
+            </div>
+
+            <!-- Supabase Tab -->
             <div id="admin-supabase" class="hidden space-y-4">
                 <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 space-y-4 max-w-2xl">
                     <h4 class="font-bold text-base text-slate-800 dark:text-slate-100 flex items-center gap-2">
@@ -506,6 +595,7 @@
                 </div>
             </div>
 
+            <!-- CSAT Tab -->
             <div id="admin-csat" class="hidden space-y-4">
                 <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200 dark:border-slate-700 space-y-4">
                     <h4 class="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-2">
@@ -515,6 +605,7 @@
                 </div>
             </div>
 
+            <!-- Audit Logs Tab -->
             <div id="admin-audit" class="hidden space-y-4">
                 <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-4">
                     <h4 class="font-bold text-xs text-slate-600 dark:text-slate-300 mb-3 flex items-center justify-between">
@@ -539,6 +630,7 @@
         </div>
     </main>
 
+    <!-- Issue Modal -->
     <div id="issueModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4 overflow-y-auto">
         <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden border border-slate-200 dark:border-slate-700 my-8">
             <div class="bg-slate-900 text-white px-6 py-4 flex justify-between items-center border-b border-slate-800">
@@ -559,11 +651,6 @@
                     <div>
                         <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">الوسم (Tag)</label>
                         <select id="issueTag" class="w-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 rounded-xl px-3 py-2 text-xs font-semibold focus:ring-2 focus:ring-indigo-500">
-                            <option value="VIP Client">VIP Client</option>
-                            <option value="Hardware">Hardware</option>
-                            <option value="Software" selected>Software</option>
-                            <option value="Bug">Bug</option>
-                            <option value="Network">Network</option>
                         </select>
                     </div>
                 </div>
@@ -629,6 +716,7 @@
         </div>
     </div>
 
+    <!-- Details Modal (محدث لإدراج تبويب السجل الزمني Timeline) -->
     <div id="detailsModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4 overflow-y-auto">
         <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-3xl overflow-hidden border border-slate-200 dark:border-slate-700 my-8">
             <div class="bg-slate-900 text-white px-6 py-4 flex justify-between items-center border-b border-slate-800">
@@ -687,6 +775,17 @@
                     <div id="detailAttachmentContainer" class="mt-2 hidden"></div>
                 </div>
 
+                <!-- 📌 قسم Timeline / Activity Log المضاف جديد داخل Modal التفاصيل -->
+                <div class="bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-3">
+                    <h4 class="font-bold text-xs text-slate-800 dark:text-slate-100 flex items-center justify-between">
+                        <span><i class="fa-solid fa-timeline text-indigo-500 ml-1.5"></i> سجل النشاط الزمني (Activity Timeline & SLA Flow)</span>
+                        <span class="text-[10px] text-slate-400 font-normal">شفافية أداء وتحويل</span>
+                    </h4>
+                    <div id="ticketTimelineContainer" class="space-y-2 border-r-2 border-indigo-500/40 pr-3 max-h-36 overflow-y-auto custom-scrollbar">
+                        <!-- تعبئة تلقائية عبر الجافاسكريبت -->
+                    </div>
+                </div>
+
                 <div class="bg-amber-50 dark:bg-amber-950/30 p-3 rounded-2xl border border-amber-200 dark:border-amber-900/40 flex items-center justify-between">
                     <div>
                         <span class="font-bold text-xs text-amber-900 dark:text-amber-200 block">⭐ تقييم رضا العميل (CSAT)</span>
@@ -710,6 +809,9 @@
 
                     <div class="space-y-2">
                         <div class="flex gap-2">
+                            <select id="cannedResponseSelect" onchange="applyCannedResponseToInput()" class="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-2 py-2 text-xs font-semibold focus:ring-2 focus:ring-indigo-500 text-slate-700 dark:text-slate-300">
+                                <option value="">⚡ رد سريع...</option>
+                            </select>
                             <input type="text" id="newCommentInput" placeholder="أضف تعليقاً أو تحديثاً جديداً..." class="flex-1 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none">
                             <button onclick="addComment()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition">إرسال</button>
                         </div>
@@ -721,6 +823,33 @@
         </div>
     </div>
 
+    <!-- Modal Resolve Reason -->
+    <div id="resolveReasonModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200 dark:border-slate-700">
+            <div class="bg-slate-900 text-white px-6 py-4 flex justify-between items-center border-b border-slate-800">
+                <h3 class="font-bold text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-circle-check text-emerald-400"></i> تحديد سبب حل/إغلاق التذكرة
+                </h3>
+                <button onclick="closeResolveReasonModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <input type="hidden" id="resolveTicketIndex">
+                <div>
+                    <label class="block text-xs font-bold mb-1">اختر رد سريع كسبب للحل أو اكتب السبب:</label>
+                    <select id="resolveCannedSelect" onchange="applyResolveCannedToInput()" class="w-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 rounded-xl p-2 text-xs mb-2">
+                        <option value="">⚡ اختر سبباً أو رداً سريعاً...</option>
+                    </select>
+                    <textarea id="resolveReasonInput" rows="3" required placeholder="سبب إغلاق التذكرة والإجراء المتخذ..." class="w-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 rounded-xl p-2.5 text-xs font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none"></textarea>
+                </div>
+                <div class="flex justify-end gap-2">
+                    <button type="button" onclick="closeResolveReasonModal()" class="px-4 py-1.5 border border-slate-300 dark:border-slate-600 rounded-xl text-xs font-bold">إلغاء</button>
+                    <button type="button" onclick="confirmResolveTicket()" class="px-4 py-1.5 bg-emerald-600 text-white font-bold rounded-xl text-xs hover:bg-emerald-700">تأكيد الحل والإغلاق</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Modal -->
     <div id="userModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
         <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200 dark:border-slate-700">
             <div class="bg-slate-900 text-white px-6 py-4 flex justify-between items-center border-b border-slate-800">
@@ -749,7 +878,7 @@
                     <label class="block text-xs font-bold mb-1">الدور والصلاحيات (Role)</label>
                     <select id="addUserRole" class="w-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 rounded-xl p-2 text-xs font-bold">
                         <option value="Agent" selected>Agent (موظف متابعة ودعم)</option>
-                        <option value="Admin">Admin (مدير كامل - له كافة الصلاحيات)</option>
+                        <option value="Admin" selected>Admin (مدير كامل - له كافة الصلاحيات)</option>
                     </select>
                 </div>
                 <div class="pt-2 flex justify-end gap-2">
@@ -760,21 +889,35 @@
         </div>
     </div>
 
+    <!-- عناصر الصوت الديناميكية -->
     <audio id="notifSound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
     <audio id="alarmSound" src="https://assets.mixkit.co/active_storage/sfx/995/995-preview.mp3" preload="auto" loop></audio>
 
     <script>
-        const STORAGE_KEY = 'ENTERPRISE_ISSUE_TRACKER_V6_SUPABASE';
+        const STORAGE_KEY = 'ENTERPRISE_ISSUE_TRACKER_V7_SUPABASE';
 
-        // بيانات Supabase الافتراضية
         let supabaseConfig = { 
-            url: 'https://your-project-id.supabase.co', // ضع رابط مشروعك هنا
-            key: 'eyJhbGciOiJIUzI1Ni...'                  // ضع مفتاح الـ Anon Key هنا
+            url: 'https://your-project-id.supabase.co', 
+            key: 'eyJhbGciOiJIUzI1Ni...'
         };
 
-        let supabaseClient = null;
+        let soundSettings = {
+            muted: false,
+            alarmUrl: 'https://assets.mixkit.co/active_storage/sfx/995/995-preview.mp3',
+            alarmStyle: 'pulse-red'
+        };
 
+        let tags = ["VIP Client", "Hardware", "Software", "Bug", "Network", "Database"];
+        let supabaseClient = null;
+        let realtimeChannel = null;
         let defaultSlaRules = { Critical: 4, High: 12, Medium: 24, Low: 48 };
+
+        let cannedResponses = [
+            "تمت المعالجة وإعادة الخدمة للعمل بنجاح.",
+            "تم حل المشكلة الفنية ومراجعة الإعدادات مع العميل.",
+            "تم التوجيه للقسم المختص وإغلاق البلاغ بعد التأكيد.",
+            "المشكلة بسبب خطأ في الإدخال وتم تدريب المستخدم وتصحيحه."
+        ];
 
         let users = [
             { name: "أحمد العتيبي (مدير النظام)", email: "admin@company.com", role: "Admin", username: "admin", password: "admin123" },
@@ -793,16 +936,14 @@
         let notifications = [];
 
         let auditLogs = [
-            { time: new Date().toLocaleString('ar-EG'), user: "System", action: "تشغيل المنظومة المحدثة", details: "تم تحميل النسخة المتطورة + مزامنة Supabase الكاملة" }
+            { time: new Date().toLocaleString('ar-EG'), user: "System", action: "تشغيل المنظومة المحدثة", details: "تم تحميل النسخة المتطورة + التحكم بصوت الحرج وإدارة الوسوم مع التايم لاين" }
         ];
 
         let tempTicketAttachment = null;
         let tempCommentAttachment = null;
         let timerInterval = null;
         let timerSeconds = 0;
-
         let globalLiveTimerInterval = null;
-
         let issues = [];
 
         let statusChartInstance = null;
@@ -814,12 +955,168 @@
             loadFromLocalStorage();
             initSupabase();
             populateCategoryDropdowns();
+            populateCannedResponseDropdowns();
+            renderTagsUI();
+            initAudioSettingsUI();
             checkSession();
             checkSlaExceededNotifications();
             setInterval(checkSlaExceededNotifications, 30000);
             startGlobalLiveTimer();
         });
 
+        /* --- 📌 دالة مساعدة لتسجيل أحداث Timeline لكل تذكرة --- */
+        function addTimelineEvent(item, eventTitle, eventDetail) {
+            if (!item.timeline) item.timeline = [];
+            const actor = currentUser ? currentUser.name : "النظام/System";
+            const nowStr = new Date().toLocaleString('ar-EG', { dateStyle: 'short', timeStyle: 'medium' });
+            item.timeline.unshift({
+                time: nowStr,
+                actor: actor,
+                title: eventTitle,
+                details: eventDetail
+            });
+        }
+
+        /* --- نظام إدارة التحكم بالصوت والشكل المضاف حديثاً --- */
+        function initAudioSettingsUI() {
+            const urlInput = document.getElementById('alarmSoundUrlInput');
+            if (urlInput) urlInput.value = soundSettings.alarmUrl;
+            
+            const btnMute = document.getElementById('btnMuteToggle');
+            if (btnMute) {
+                btnMute.innerText = soundSettings.muted ? "صوت التنبيه: مكتوم 🔇" : "صوت التنبيه: مفعّل 🔊";
+                btnMute.className = soundSettings.muted ? "px-3 py-1.5 bg-rose-700 hover:bg-rose-600 text-white rounded-lg text-xs font-bold transition" : "px-3 py-1.5 bg-emerald-700 hover:bg-emerald-600 text-white rounded-lg text-xs font-bold transition";
+            }
+            
+            const alarmAudio = document.getElementById('alarmSound');
+            if (alarmAudio && soundSettings.alarmUrl) {
+                alarmAudio.src = soundSettings.alarmUrl;
+            }
+        }
+
+        function testAlarmSound() {
+            const alarmAudio = document.getElementById('alarmSound');
+            if (alarmAudio) {
+                alarmAudio.currentTime = 0;
+                alarmAudio.play();
+                setTimeout(() => { alarmAudio.pause(); }, 3000);
+            }
+        }
+
+        function toggleMuteSound() {
+            soundSettings.muted = !soundSettings.muted;
+            if (soundSettings.muted) stopAlarmSound();
+            initAudioSettingsUI();
+            saveToLocalStorage(true);
+        }
+
+        function changeAlarmStyle(styleName) {
+            soundSettings.alarmStyle = styleName;
+            const banner = document.getElementById('slaAlarmBanner');
+            if (banner) {
+                if (styleName === 'pulse-red') banner.className = "bg-rose-600 text-white px-4 py-2 text-xs font-black flex justify-between items-center shadow-lg border-b border-rose-700 animate-pulse z-50";
+                else if (styleName === 'dark-rose') banner.className = "bg-rose-950 text-rose-100 border-b border-rose-800 px-4 py-2 text-xs font-black flex justify-between items-center shadow-lg z-50";
+                else if (styleName === 'amber-warning') banner.className = "bg-amber-500 text-slate-950 border-b border-amber-600 px-4 py-2 text-xs font-black flex justify-between items-center shadow-lg z-50";
+            }
+            saveToLocalStorage(true);
+        }
+
+        function saveAudioSettings() {
+            const urlInput = document.getElementById('alarmSoundUrlInput').value.trim();
+            if (urlInput) {
+                soundSettings.alarmUrl = urlInput;
+                const alarmAudio = document.getElementById('alarmSound');
+                if (alarmAudio) alarmAudio.src = urlInput;
+            }
+            saveToLocalStorage(true);
+            logAuditAction("تعديل إعدادات التنبيه", "تم حفظ وتحديث إعدادات الصوت ومظهر البلاغات الحرجة");
+            alert("تم حفظ إعدادات الصوت والشكل بنجاح!");
+        }
+
+        function closeAlarmBanner() {
+            document.getElementById('slaAlarmBanner').classList.add('hidden');
+            stopAlarmSound();
+        }
+
+        /* --- نظام إدارة الوسوم (Tags) --- */
+        function renderTagsUI() {
+            const filterTagSelect = document.getElementById('filterTag');
+            if (filterTagSelect) {
+                const currentVal = filterTagSelect.value || 'ALL';
+                filterTagSelect.innerHTML = '<option value="ALL">جميع الوسوم (Tags)</option>';
+                tags.forEach(t => {
+                    const opt = document.createElement('option');
+                    opt.value = t;
+                    opt.innerText = t;
+                    filterTagSelect.appendChild(opt);
+                });
+                filterTagSelect.value = currentVal;
+            }
+
+            const issueTagSelect = document.getElementById('issueTag');
+            if (issueTagSelect) {
+                issueTagSelect.innerHTML = '';
+                tags.forEach(t => {
+                    const opt = document.createElement('option');
+                    opt.value = t;
+                    opt.innerText = t;
+                    issueTagSelect.appendChild(opt);
+                });
+            }
+
+            const tagsListContainer = document.getElementById('tagsListContainer');
+            if (tagsListContainer) {
+                tagsListContainer.innerHTML = '';
+                tags.forEach((t, index) => {
+                    const div = document.createElement('div');
+                    div.className = "flex items-center justify-between p-2.5 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold";
+                    div.innerHTML = `
+                        <span class="text-indigo-600 dark:text-indigo-400"><i class="fa-solid fa-tag ml-1"></i> ${t}</span>
+                        <div class="flex items-center gap-1">
+                            <button onclick="editTag(${index})" class="text-slate-400 hover:text-indigo-500 p-1"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="deleteTag(${index})" class="text-rose-500 hover:text-rose-700 p-1"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    `;
+                    tagsListContainer.appendChild(div);
+                });
+            }
+        }
+
+        function addNewTag() {
+            const input = document.getElementById('newTagInput');
+            const val = input.value.trim();
+            if (!val) { alert("يرجى إدخال اسم الوسم أولاً!"); return; }
+            if (tags.includes(val)) { alert("هذا الوسم موجود بالفعل!"); return; }
+            tags.push(val);
+            input.value = '';
+            saveToLocalStorage(true);
+            renderTagsUI();
+            logAuditAction("إضافة وسم", `تمت إضافة الوسم الجديد: ${val}`);
+        }
+
+        function editTag(index) {
+            const oldVal = tags[index];
+            const newVal = prompt("تعديل اسم الوسم:", oldVal);
+            if (newVal && newVal.trim() !== "" && newVal !== oldVal) {
+                tags[index] = newVal.trim();
+                issues.forEach(i => { if (i.tag === oldVal) i.tag = newVal.trim(); });
+                saveToLocalStorage(true);
+                renderTagsUI();
+                renderIssues();
+                logAuditAction("تعديل وسم", `تم تغيير الوسم من (${oldVal}) إلى (${newVal})`);
+            }
+        }
+
+        function deleteTag(index) {
+            if (confirm(`هل أنت تأكد من حذف الوسم (${tags[index]})؟`)) {
+                const removed = tags.splice(index, 1);
+                saveToLocalStorage(true);
+                renderTagsUI();
+                logAuditAction("حذف وسم", `تم حذف الوسم: ${removed[0]}`);
+            }
+        }
+
+        /* --- الأكواد الأساسية والتطبيق --- */
         function startGlobalLiveTimer() {
             if (globalLiveTimerInterval) clearInterval(globalLiveTimerInterval);
             globalLiveTimerInterval = setInterval(() => {
@@ -868,7 +1165,7 @@
         }
 
         function saveToLocalStorage(syncCloud = true) {
-            const payload = { issues, users, categories, auditLogs, notifications, slaRules: defaultSlaRules, currentUser, supabaseConfig };
+            const payload = { issues, users, categories, auditLogs, notifications, slaRules: defaultSlaRules, cannedResponses, tags, soundSettings, currentUser, supabaseConfig };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
             if (syncCloud) {
                 syncToSupabaseCloud();
@@ -886,13 +1183,91 @@
                     if (parsed.auditLogs) auditLogs = parsed.auditLogs;
                     if (parsed.notifications) notifications = parsed.notifications;
                     if (parsed.slaRules) defaultSlaRules = parsed.slaRules;
+                    if (parsed.cannedResponses) cannedResponses = parsed.cannedResponses;
+                    if (parsed.tags) tags = parsed.tags;
+                    if (parsed.soundSettings) soundSettings = parsed.soundSettings;
                     if (parsed.currentUser) currentUser = parsed.currentUser;
                     
-                    // الاعتماد على بيانات Supabase المحفوظة فقط في حال وجود قيم بها
                     if (parsed.supabaseConfig && parsed.supabaseConfig.url && parsed.supabaseConfig.key) {
                         supabaseConfig = parsed.supabaseConfig;
                     }
                 } catch(e) { console.error("LocalStorage parse error", e); }
+            }
+        }
+
+        function populateCannedResponseDropdowns() {
+            const commentSelect = document.getElementById('cannedResponseSelect');
+            const resolveSelect = document.getElementById('resolveCannedSelect');
+            
+            if (commentSelect) {
+                commentSelect.innerHTML = '<option value="">⚡ رد سريع...</option>';
+                cannedResponses.forEach(res => {
+                    const opt = document.createElement('option');
+                    opt.value = res;
+                    opt.innerText = res.length > 40 ? res.substring(0, 40) + '...' : res;
+                    commentSelect.appendChild(opt);
+                });
+            }
+
+            if (resolveSelect) {
+                resolveSelect.innerHTML = '<option value="">⚡ اختر سبباً أو رداً سريعاً...</option>';
+                cannedResponses.forEach(res => {
+                    const opt = document.createElement('option');
+                    opt.value = res;
+                    opt.innerText = res;
+                    resolveSelect.appendChild(opt);
+                });
+            }
+
+            renderCannedResponsesAdminList();
+        }
+
+        function applyCannedResponseToInput() {
+            const val = document.getElementById('cannedResponseSelect').value;
+            if (val) {
+                document.getElementById('newCommentInput').value = val;
+            }
+        }
+
+        function applyResolveCannedToInput() {
+            const val = document.getElementById('resolveCannedSelect').value;
+            if (val) {
+                document.getElementById('resolveReasonInput').value = val;
+            }
+        }
+
+        function renderCannedResponsesAdminList() {
+            const listContainer = document.getElementById('cannedResponsesAdminList');
+            if (!listContainer) return;
+            listContainer.innerHTML = '';
+            cannedResponses.forEach((res, idx) => {
+                const div = document.createElement('div');
+                div.className = "flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 text-xs";
+                div.innerHTML = `
+                    <span class="font-semibold flex-1 ml-2">${res}</span>
+                    <button onclick="deleteCannedResponse(${idx})" class="text-rose-500 hover:text-rose-700 p-1"><i class="fa-solid fa-trash"></i></button>
+                `;
+                listContainer.appendChild(div);
+            });
+        }
+
+        function addCannedResponse() {
+            const input = document.getElementById('newCannedResponseInput');
+            const val = input.value.trim();
+            if (!val) { alert("يرجى كتابة نص الرد السريع أولاً!"); return; }
+            cannedResponses.push(val);
+            input.value = '';
+            saveToLocalStorage(true);
+            populateCannedResponseDropdowns();
+            logAuditAction("إضافة رد سريع", `تمت إضافة الرد السريع: ${val}`);
+        }
+
+        function deleteCannedResponse(index) {
+            if (confirm("هل أصل مؤكد من حذف هذا الرد السريع؟")) {
+                const removed = cannedResponses.splice(index, 1);
+                saveToLocalStorage(true);
+                populateCannedResponseDropdowns();
+                logAuditAction("حذف رد سريع", `تم حذف الرد السريع: ${removed[0]}`);
             }
         }
 
@@ -908,10 +1283,7 @@
         }
 
         function exportDataCSV() {
-            if (issues.length === 0) {
-                alert("لا توجد بيانات لتصديرها!");
-                return;
-            }
+            if (issues.length === 0) { alert("لا توجد بيانات لتصديرها!"); return; }
 
             let csvContent = "\uFEFF"; 
             csvContent += "كود المشكلة,اسم العميل,الوسم,نوع المشكلة,الوصف,المستلم,المسؤول الحالي,الأولوية,الحالة,الوقت المستغرق (ثواني),تقييم CSAT,تاريخ الإرسال\n";
@@ -946,10 +1318,7 @@
 
         function exportSlaBreachedReport() {
             const breached = issues.filter(i => isSlaBreached(i));
-            if (breached.length === 0) {
-                alert("لا توجد مشاكل متأخرة تجاوزت SLA حالياً!");
-                return;
-            }
+            if (breached.length === 0) { alert("لا توجد مشاكل متأخرة تجاوزت SLA حالياً!"); return; }
 
             let csvContent = "\uFEFF";
             csvContent += "كود المشكلة,اسم العميل,نوع المشكلة,المسؤول,الأولوية,الحالة,تاريخ الإرسال\n";
@@ -978,19 +1347,32 @@
         }
 
         function initSupabase() {
-            if (supabaseConfig.url && supabaseConfig.key) {
+            if (supabaseConfig.url && supabaseConfig.key && !supabaseConfig.url.includes('your-project-id')) {
                 try {
                     supabaseClient = supabase.createClient(supabaseConfig.url, supabaseConfig.key);
-                    updateCloudBadge(true, "متصل بالسحابة");
+                    updateCloudBadge(true, "متصل بالسحابة (مباشر)");
                     document.getElementById('supabaseUrlInput').value = supabaseConfig.url;
                     document.getElementById('supabaseKeyInput').value = supabaseConfig.key;
                     fetchFromSupabaseCloud(true);
+                    setupSupabaseRealtime();
                 } catch(e) {
                     updateCloudBadge(false, "خطأ بالاتصال");
                 }
             } else {
                 updateCloudBadge(false, "غير مفعل");
             }
+        }
+
+        function setupSupabaseRealtime() {
+            if (!supabaseClient) return;
+            if (realtimeChannel) supabaseClient.removeChannel(realtimeChannel);
+
+            realtimeChannel = supabaseClient.channel('public:issues')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'issues' }, (payload) => {
+                    fetchFromSupabaseCloud(true);
+                    addLiveNotification("تحديث سحابي مباشر", "تم تحديث بيانات التذاكر لحظياً عبر Realtime.");
+                })
+                .subscribe();
         }
 
         function saveSupabaseConfig() {
@@ -1009,7 +1391,7 @@
             txt.innerText = text;
             if (isConnected) {
                 badge.className = "bg-emerald-950/60 border border-emerald-800 px-2.5 py-1 rounded-xl flex items-center gap-1 text-[11px] font-bold text-emerald-400";
-                icon.className = "fa-solid fa-cloud text-emerald-400";
+                icon.className = "fa-solid fa-cloud text-emerald-400 animate-pulse";
             } else {
                 badge.className = "bg-slate-800 border border-slate-700 px-2.5 py-1 rounded-xl flex items-center gap-1 text-[11px] font-bold text-slate-400";
                 icon.className = "fa-solid fa-cloud text-slate-500";
@@ -1019,7 +1401,6 @@
         async function syncToSupabaseCloud() {
             if (!supabaseClient) return;
             try {
-                // 1. رفع المشاكل (issues)
                 const rows = issues.map(item => ({
                     id: item.id,
                     client: item.client,
@@ -1034,19 +1415,20 @@
                     worktime: item.workTime,
                     csat: item.csat,
                     comments: item.comments,
-                    attachment: item.attachment
+                    attachment: item.attachment,
+                    timeline: item.timeline
                 }));
-                const { error: errIssues } = await supabaseClient.from('issues').upsert(rows, { onConflict: 'id' });
-                if (errIssues) console.error("Supabase Issues Push Error:", errIssues);
+                await supabaseClient.from('issues').upsert(rows, { onConflict: 'id' });
 
-                // 2. رفع الإعدادات (app_settings)
                 const settingsRow = {
                     id: 'global',
                     categories: categories,
-                    sla_rules: defaultSlaRules
+                    sla_rules: defaultSlaRules,
+                    canned_responses: cannedResponses,
+                    tags: tags,
+                    sound_settings: soundSettings
                 };
-                const { error: errSettings } = await supabaseClient.from('app_settings').upsert([settingsRow], { onConflict: 'id' });
-                if (errSettings) console.error("Supabase Settings Push Error:", errSettings);
+                await supabaseClient.from('app_settings').upsert([settingsRow], { onConflict: 'id' });
 
             } catch(e) { console.error("Supabase sync exception:", e); }
         }
@@ -1057,7 +1439,6 @@
                 return;
             }
             try {
-                // 1. جلب المشاكل
                 const { data: issuesData, error: errIssues } = await supabaseClient.from('issues').select('*');
                 if (errIssues) throw errIssues;
                 if (issuesData && issuesData.length > 0) {
@@ -1075,19 +1456,24 @@
                         workTime: item.worktime || 0,
                         csat: item.csat || 5,
                         comments: item.comments || [],
-                        attachment: item.attachment || null
+                        attachment: item.attachment || null,
+                        timeline: item.timeline || []
                     }));
                 }
 
-                // 2. جلب المستخدمين
                 await fetchUsersFromSupabaseCloud();
 
-                // 3. جلب الأقسام وقواعد SLA من app_settings
                 const { data: settingsData, error: errSettings } = await supabaseClient.from('app_settings').select('*').eq('id', 'global').single();
                 if (!errSettings && settingsData) {
                     if (settingsData.categories) categories = settingsData.categories;
                     if (settingsData.sla_rules) defaultSlaRules = settingsData.sla_rules;
+                    if (settingsData.canned_responses) cannedResponses = settingsData.canned_responses;
+                    if (settingsData.tags) tags = settingsData.tags;
+                    if (settingsData.sound_settings) soundSettings = settingsData.sound_settings;
                     populateCategoryDropdowns();
+                    populateCannedResponseDropdowns();
+                    renderTagsUI();
+                    initAudioSettingsUI();
                 }
 
                 saveToLocalStorage(false);
@@ -1159,10 +1545,12 @@
         }
 
         function playNotificationSound() {
+            if (soundSettings.muted) return;
             try { document.getElementById('notifSound').play(); } catch(e) {}
         }
 
         function playAlarmSound() {
+            if (soundSettings.muted) return;
             try { document.getElementById('alarmSound').play(); } catch(e) {}
         }
 
@@ -1190,11 +1578,7 @@
 
         function checkSlaExceededNotifications() {
             let breachedCount = 0;
-            issues.forEach(item => {
-                if (isSlaBreached(item)) {
-                    breachedCount++;
-                }
-            });
+            issues.forEach(item => { if (isSlaBreached(item)) breachedCount++; });
 
             const banner = document.getElementById('slaAlarmBanner');
             const msg = document.getElementById('slaAlarmMessage');
@@ -1252,316 +1636,83 @@
             }
         }
 
-        function logAuditAction(action, details) {
-            auditLogs.unshift({
-                time: new Date().toLocaleString('ar-EG'),
-                user: currentUser ? currentUser.name : "System",
-                action, details
-            });
-            if (auditLogs.length > 60) auditLogs.pop();
-            saveToLocalStorage(false);
-        }
-
-        function clearAuditLogs() {
-            auditLogs = [];
-            saveToLocalStorage(false);
-            renderAuditLogs();
-        }
-
-        function renderAuditLogs() {
-            const tbody = document.getElementById('auditLogsBody');
-            if(!tbody) return;
-            tbody.innerHTML = '';
-            auditLogs.forEach(log => {
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-50 dark:hover:bg-slate-700/50";
-                tr.innerHTML = `
-                    <td class="p-2 text-slate-400 font-mono text-[11px]">${log.time}</td>
-                    <td class="p-2 font-bold text-slate-700 dark:text-slate-300">${log.user}</td>
-                    <td class="p-2 font-bold text-indigo-500">${log.action}</td>
-                    <td class="p-2 text-slate-600 dark:text-slate-400">${log.details}</td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
         function toggleDarkMode() {
-            const html = document.documentElement;
+            document.documentElement.classList.toggle('dark');
             const icon = document.getElementById('theme-icon');
-            if (html.classList.contains('dark')) {
-                html.classList.remove('dark');
-                icon.className = 'fa-solid fa-sun text-amber-500';
+            if (document.documentElement.classList.contains('dark')) {
+                icon.className = 'fa-solid fa-moon text-sm text-amber-400';
             } else {
-                html.classList.add('dark');
-                icon.className = 'fa-solid fa-moon text-amber-400';
+                icon.className = 'fa-solid fa-sun text-sm text-amber-500';
             }
         }
 
-        function switchTab(tab) {
-            if (tab === 'admin' && currentUser.role !== 'Admin') {
-                alert("عذراً! لوحة الإدمن مقتصرة فقط على المديرين (Admin).");
+        function switchTab(tabId) {
+            ['dashboard', 'issues', 'admin'].forEach(id => {
+                const el = document.getElementById(`view-${id}`);
+                const btn = document.getElementById(`btn-${id}`);
+                if (id === tabId) {
+                    el.classList.remove('hidden');
+                    btn.className = "px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-1.5 bg-indigo-600 text-white shadow-md";
+                } else {
+                    el.classList.add('hidden');
+                    btn.className = "px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-1.5 text-slate-300 hover:bg-slate-700";
+                }
+            });
+            if (tabId === 'dashboard') renderDashboard();
+            if (tabId === 'issues') renderIssues();
+        }
+
+        function switchAdminSubTab(subId) {
+            ['users', 'tags', 'audio', 'reports', 'categories', 'cannedResponses', 'supabase', 'csat', 'audit'].forEach(id => {
+                const el = document.getElementById(`admin-${id}`);
+                const btn = document.getElementById(`subtab-btn-${id}`);
+                if (el) {
+                    if (id === subId) {
+                        el.classList.remove('hidden');
+                        if (btn) btn.className = "pb-3 border-b-2 border-indigo-600 text-indigo-600 dark:text-indigo-400 whitespace-nowrap font-bold";
+                    } else {
+                        el.classList.add('hidden');
+                        if (btn) btn.className = "pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 whitespace-nowrap font-bold";
+                    }
+                }
+            });
+        }
+
+        /* --- الدوال الخاصة بالتذاكر والتايم لاين داخل Modal --- */
+        function renderTicketTimeline(item) {
+            const container = document.getElementById('ticketTimelineContainer');
+            if (!container) return;
+            container.innerHTML = '';
+            
+            if (!item.timeline || item.timeline.length === 0) {
+                container.innerHTML = `<p class="text-[11px] text-slate-400">لا توجد أحداث مسجلة بعد.</p>`;
                 return;
             }
 
-            document.getElementById('view-dashboard').classList.add('hidden');
-            document.getElementById('view-issues').classList.add('hidden');
-            document.getElementById('view-admin').classList.add('hidden');
-
-            const activeClass = "px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-1.5 bg-indigo-600 text-white shadow-md";
-            const inactiveClass = "px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-1.5 text-slate-300 hover:bg-slate-800";
-
-            document.getElementById('btn-dashboard').className = inactiveClass;
-            document.getElementById('btn-issues').className = inactiveClass;
-            document.getElementById('btn-admin').className = inactiveClass;
-
-            if (tab === 'dashboard') {
-                document.getElementById('view-dashboard').classList.remove('hidden');
-                document.getElementById('btn-dashboard').className = activeClass;
-                renderDashboard();
-            } else if (tab === 'issues') {
-                document.getElementById('view-issues').classList.remove('hidden');
-                document.getElementById('btn-issues').className = activeClass;
-                renderIssues();
-            } else if (tab === 'admin') {
-                document.getElementById('view-admin').classList.remove('hidden');
-                document.getElementById('btn-admin').className = activeClass;
-                renderAdmin();
-            }
-        }
-
-        function renderAll() {
-            renderDashboard();
-            renderIssues();
-            renderNotifications();
-        }
-
-        function calculateSlaBadge(dateSentStr, priorityStr, statusStr) {
-            if (statusStr === 'Resolved' || statusStr === 'Closed') {
-                return '<span class="bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 px-2 py-0.5 rounded text-[10px] font-bold">✅ تم الالتزام</span>';
-            }
-
-            let allowedHours = defaultSlaRules.Medium;
-            if (priorityStr.includes('Critical')) allowedHours = defaultSlaRules.Critical;
-            else if (priorityStr.includes('High')) allowedHours = defaultSlaRules.High;
-            else if (priorityStr.includes('Low')) allowedHours = defaultSlaRules.Low;
-
-            const sentDate = new Date(dateSentStr);
-            const now = new Date();
-            const diffMs = now - sentDate;
-            const diffHours = diffMs / (1000 * 60 * 60);
-            const remainingHours = allowedHours - diffHours;
-
-            if (remainingHours <= 0) {
-                const lateHrs = Math.floor(Math.abs(remainingHours));
-                const lateMins = Math.floor((Math.abs(remainingHours) - lateHrs) * 60);
-                return `<span class="bg-rose-600 text-white px-2 py-0.5 rounded text-[10px] font-bold animate-pulse shadow">⚠️ متأخر (${lateHrs}س ${lateMins}د)</span>`;
-            } else if (remainingHours <= 2) {
-                const remHrs = Math.floor(remainingHours);
-                const remMins = Math.floor((remainingHours - remHrs) * 60);
-                return `<span class="bg-amber-500 text-white px-2 py-0.5 rounded text-[10px] font-bold shadow">⏳ ينتهي قريباً (${remHrs}س ${remMins}د)</span>`;
-            } else {
-                const remHrs = Math.floor(remainingHours);
-                return `<span class="bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 px-2 py-0.5 rounded text-[10px] font-bold">⏱️ متبقي ${remHrs}س</span>`;
-            }
-        }
-
-        function formatSecondsToHMS(secs) {
-            if (!secs) secs = 0;
-            const h = Math.floor(secs / 3600).toString().padStart(2, '0');
-            const m = Math.floor((secs % 3600) / 60).toString().padStart(2, '0');
-            const s = (secs % 60).toString().padStart(2, '0');
-            return `${h}:${m}:${s}`;
-        }
-
-        function markSingleAsResolved(index) {
-            if (issues[index]) {
-                issues[index].status = 'Resolved';
-                logAuditAction("تغيير حالة تذكرة", `تم تحويل التذكرة ${issues[index].id} إلى Resolved`);
-                saveToLocalStorage(true);
-                renderAll();
-                checkSlaExceededNotifications();
-            }
-        }
-
-        function renderDashboard() {
-            const total = issues.length;
-            const open = issues.filter(i => i.status === 'Open').length;
-            const pending = issues.filter(i => i.status === 'Pending').length;
-            const closed = issues.filter(i => i.status === 'Resolved' || i.status === 'Closed').length;
-            const slaBreached = issues.filter(i => isSlaBreached(i)).length;
-
-            let totalCsat = 0, csatCount = 0;
-            issues.forEach(i => { if (i.csat) { totalCsat += i.csat; csatCount++; } });
-            const avgCsat = csatCount > 0 ? (totalCsat / csatCount).toFixed(1) : "5.0";
-
-            document.getElementById('kpi-total').innerText = total;
-            document.getElementById('kpi-open').innerText = open;
-            document.getElementById('kpi-pending').innerText = pending;
-            document.getElementById('kpi-sla-breach').innerText = slaBreached;
-            document.getElementById('kpi-csat').innerText = avgCsat;
-
-            const ctxStatus = document.getElementById('statusChart').getContext('2d');
-            if (statusChartInstance) statusChartInstance.destroy();
-            statusChartInstance = new Chart(ctxStatus, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Open (مفتوحة)', 'Pending (معلقة)', 'Resolved/Closed (مغلقة)'],
-                    datasets: [{ data: [open, pending, closed], backgroundColor: ['#f43f5e', '#f59e0b', '#10b981'] }]
-                },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
-            });
-
-            const ctxPriority = document.getElementById('priorityChart').getContext('2d');
-            const critical = issues.filter(i => i.priority.includes('Critical')).length;
-            const high = issues.filter(i => i.priority.includes('High')).length;
-            const medium = issues.filter(i => i.priority.includes('Medium')).length;
-            const low = issues.filter(i => i.priority.includes('Low')).length;
-
-            if (priorityChartInstance) priorityChartInstance.destroy();
-            priorityChartInstance = new Chart(ctxPriority, {
-                type: 'bar',
-                data: {
-                    labels: ['Critical', 'High', 'Medium', 'Low'],
-                    datasets: [{ label: 'عدد المشاكل', data: [critical, high, medium, low], backgroundColor: ['#b91c1c', '#ea580c', '#eab308', '#16a34a'] }]
-                },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-            });
-
-            const ctxCat = document.getElementById('categoryChart').getContext('2d');
-            const catCounts = categories.map(cat => issues.filter(i => i.type === cat.name).length);
-
-            if (categoryChartInstance) categoryChartInstance.destroy();
-            categoryChartInstance = new Chart(ctxCat, {
-                type: 'polarArea',
-                data: {
-                    labels: categories.map(c => c.name.split('/')[0].trim()),
-                    datasets: [{ data: catCounts, backgroundColor: ['#6366f1', '#ec4899', '#14b8a6', '#f97316', '#8b5cf6'] }]
-                },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
-            });
-        }
-
-        function renderIssues() {
-            const tbody = document.getElementById('issuesTableBody');
-            const search = document.getElementById('searchInput').value.toLowerCase();
-            const filterStatus = document.getElementById('filterStatus').value;
-            const filterPriority = document.getElementById('filterPriority').value;
-            const filterTag = document.getElementById('filterTag').value;
-
-            tbody.innerHTML = '';
-
-            const filtered = issues.filter((item) => {
-                const matchesSearch = item.client.toLowerCase().includes(search) ||
-                                      item.desc.toLowerCase().includes(search) ||
-                                      item.owner.toLowerCase().includes(search) ||
-                                      (item.tag && item.tag.toLowerCase().includes(search)) ||
-                                      item.id.toLowerCase().includes(search);
-                
-                let matchesStatus = filterStatus === 'ALL' || item.status === filterStatus;
-                if (filterStatus === 'Breached') {
-                    matchesStatus = isSlaBreached(item);
-                }
-
-                const matchesPriority = filterPriority === 'ALL' || item.priority === filterPriority;
-                const matchesTag = filterTag === 'ALL' || item.tag === filterTag;
-
-                return matchesSearch && matchesStatus && matchesPriority && matchesTag;
-            });
-
-            filtered.forEach((item, index) => {
-                let statusBadge = '';
-                if(item.status === 'Open') statusBadge = '<span class="bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 px-2.5 py-0.5 rounded-full text-xs font-bold">🔴 Open</span>';
-                else if(item.status === 'Pending') statusBadge = '<span class="bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 px-2.5 py-0.5 rounded-full text-xs font-bold">🟠 Pending</span>';
-                else if(item.status === 'Resolved') statusBadge = '<span class="bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 px-2.5 py-0.5 rounded-full text-xs font-bold">🟢 Resolved</span>';
-                else statusBadge = '<span class="bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-2.5 py-0.5 rounded-full text-xs font-bold">⚪ Closed</span>';
-
-                const slaBadge = calculateSlaBadge(item.date, item.priority, item.status);
-                const breachedClass = isSlaBreached(item) ? 'alarm-active' : '';
-
-                const deleteButtonHtml = currentUser && currentUser.role === 'Admin'
-                    ? `<button onclick="deleteIssue(${index})" class="text-rose-600 hover:text-rose-800 dark:text-rose-400 p-1 rounded" title="حذف"><i class="fa-solid fa-trash"></i></button>`
-                    : `<button onclick="alert('عذراً! الحذف مقتصر فقط على الأدمن.')" class="text-slate-300 p-1"><i class="fa-solid fa-lock text-xs"></i></button>`;
-
-                const resolveButtonHtml = item.status !== 'Resolved' && item.status !== 'Closed'
-                    ? `<button onclick="markSingleAsResolved(${index})" class="text-emerald-600 hover:text-emerald-800 dark:text-emerald-400 p-1" title="تحويل التذكرة لـ Resolved"><i class="fa-solid fa-circle-check"></i></button>`
-                    : '';
-
-                const tagBadge = item.tag ? `<span class="bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 px-1.5 py-0.5 rounded text-[10px] font-bold block w-max mt-1">${item.tag}</span>` : '';
-
-                const tr = document.createElement('tr');
-                tr.className = `hover:bg-slate-50 dark:hover:bg-slate-700/50 transition ${breachedClass}`;
-                tr.innerHTML = `
-                    <td class="p-3 text-center"><input type="checkbox" class="issue-checkbox rounded text-indigo-600" value="${index}" onchange="updateBulkBar()"></td>
-                    <td class="p-3 font-mono font-bold text-indigo-600 dark:text-indigo-400 text-xs">${item.id}</td>
-                    <td class="p-3 font-extrabold text-slate-800 dark:text-slate-100">${item.client} ${tagBadge}</td>
-                    <td class="p-3 text-slate-500 dark:text-slate-400">${item.type}</td>
-                    <td class="p-3 text-slate-700 dark:text-slate-300 max-w-xs truncate" title="${item.desc}">${item.desc}</td>
-                    <td class="p-3 text-slate-600 dark:text-slate-400">${item.assigned}</td>
-                    <td class="p-3 text-amber-600 dark:text-amber-400 font-bold">${item.owner}</td>
-                    <td class="p-3 font-mono text-xs font-bold text-emerald-600 dark:text-emerald-400"><i class="fa-solid fa-clock ml-1 text-[10px]"></i>${formatSecondsToHMS(item.workTime)}</td>
-                    <td class="p-3 font-bold text-xs">${item.priority}</td>
-                    <td class="p-3">${statusBadge}</td>
-                    <td class="p-3">${slaBadge}</td>
-                    <td class="p-3 text-center space-x-1 space-x-reverse">
-                        ${resolveButtonHtml}
-                        <button onclick="openDetailsModal(${index})" class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 p-1" title="التفاصيل"><i class="fa-solid fa-comments"></i></button>
-                        <button onclick="editIssue(${index})" class="text-amber-600 dark:text-amber-400 hover:text-amber-800 p-1" title="تعديل"><i class="fa-solid fa-pen-to-square"></i></button>
-                        ${deleteButtonHtml}
-                    </td>
+            item.timeline.forEach(ev => {
+                const div = document.createElement('div');
+                div.className = "relative text-[11px] bg-white dark:bg-slate-800 p-2 rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xs";
+                div.innerHTML = `
+                    <div class="flex justify-between items-center text-[10px] text-slate-400 mb-0.5">
+                        <span class="font-bold text-indigo-600 dark:text-indigo-400">${ev.actor}</span>
+                        <span>${ev.time}</span>
+                    </div>
+                    <p class="font-extrabold text-slate-700 dark:text-slate-200">${ev.title}</p>
+                    <p class="text-slate-500 dark:text-slate-400 text-[10px] mt-0.5">${ev.details}</p>
                 `;
-                tbody.appendChild(tr);
+                container.appendChild(div);
             });
-        }
-
-        function populateCategoryDropdowns() {
-            const select = document.getElementById('issueType');
-            select.innerHTML = '';
-            categories.forEach(cat => {
-                const opt = document.createElement('option');
-                opt.value = cat.name;
-                opt.innerText = cat.name;
-                select.appendChild(opt);
-            });
-            autoRouteAssignee();
-        }
-
-        function autoRouteAssignee() {
-            const selectedType = document.getElementById('issueType').value;
-            const matchedCat = categories.find(c => c.name === selectedType);
-            if (matchedCat) {
-                document.getElementById('assignedTo').value = matchedCat.assigned;
-                document.getElementById('currentOwner').value = matchedCat.owner;
-            }
-        }
-
-        function handleFileUpload(event, type) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const fileData = { name: file.name, type: file.type, data: e.target.result };
-                if (type === 'ticket') {
-                    tempTicketAttachment = fileData;
-                    document.getElementById('attachmentPreview').innerHTML = `<span class="text-xs text-emerald-600 font-bold">✓ تم إرفاق الملف: ${file.name}</span>`;
-                    document.getElementById('attachmentPreview').classList.remove('hidden');
-                } else if (type === 'comment') {
-                    tempCommentAttachment = fileData;
-                    document.getElementById('commentFilePreview').innerText = `✓ مرفق جاهز: ${file.name}`;
-                    document.getElementById('commentFilePreview').classList.remove('hidden');
-                }
-            };
-            reader.readAsDataURL(file);
         }
 
         function openIssueModal() {
-            populateCategoryDropdowns();
-            document.getElementById('issueForm').reset();
             document.getElementById('issueIndex').value = '';
-            document.getElementById('attachmentPreview').classList.add('hidden');
+            document.getElementById('issueForm').reset();
+            document.getElementById('modalTitle.innerHTML', 'إضافة مشكلة جديدة');
+            document.getElementById('dateSent').value = new Date().toISOString().slice(0, 10);
+            autoRouteAssignee();
             tempTicketAttachment = null;
-            document.getElementById('modalTitle').innerText = 'إضافة مشكلة جديدة';
-            document.getElementById('dateSent').valueAsDate = new Date();
+            document.getElementById('attachmentPreview').innerHTML = '';
+            document.getElementById('attachmentPreview').classList.add('hidden');
             document.getElementById('issueModal').classList.remove('hidden');
             document.getElementById('issueModal').classList.add('flex');
         }
@@ -1571,52 +1722,290 @@
             document.getElementById('issueModal').classList.remove('flex');
         }
 
-        function saveIssue(e) {
-            e.preventDefault();
-            const index = document.getElementById('issueIndex').value;
-            const priorityVal = document.getElementById('priority').value;
+        function openDetailsModal(index) {
+            activeDetailIndex = index;
+            const item = issues[index];
+            if (!item) return;
 
-            const issueData = {
-                id: index !== '' ? issues[index].id : 'INC-' + (1001 + issues.length),
-                client: document.getElementById('clientName').value.trim(),
-                tag: document.getElementById('issueTag').value,
-                type: document.getElementById('issueType').value,
-                desc: document.getElementById('issueDesc').value.trim(),
-                assigned: document.getElementById('assignedTo').value.trim(),
-                owner: document.getElementById('currentOwner').value.trim(),
-                priority: priorityVal,
-                status: document.getElementById('status').value,
-                date: document.getElementById('dateSent').value,
-                workTime: index !== '' ? (issues[index].workTime || 0) : 0,
-                csat: index !== '' ? (issues[index].csat || 5) : 5,
-                attachment: tempTicketAttachment || (index !== '' ? issues[index].attachment : null),
-                comments: index !== '' ? (issues[index].comments || []) : []
-            };
+            document.getElementById('detailId').innerText = item.id;
+            document.getElementById('detailClient').innerText = item.client;
+            document.getElementById('detailTag').innerText = item.tag || 'عام';
+            document.getElementById('detailType').innerText = item.type;
+            document.getElementById('detailPriority').innerText = item.priority;
+            document.getElementById('detailStatus').innerText = item.status;
+            document.getElementById('detailOwner').innerText = item.owner;
+            document.getElementById('detailDesc').innerText = item.desc;
 
-            if (index !== '') {
-                issues[index] = issueData;
-                logAuditAction("تعديل مشكلة", `تم تحديث بيانات التيكت ${issueData.id}`);
+            // عرض المرفق للمشكلة إن وجد
+            const attContainer = document.getElementById('detailAttachmentContainer');
+            if (item.attachment) {
+                attContainer.innerHTML = `<a href="${item.attachment.url}" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-300 rounded-xl text-xs font-bold"><i class="fa-solid fa-paperclip"></i> ${item.attachment.name}</a>`;
+                attContainer.classList.remove('hidden');
             } else {
-                issues.unshift(issueData);
-                logAuditAction("إضافة مشكلة", `تم فتح تيكت جديد ${issueData.id}`);
-
-                if (priorityVal.includes('Critical')) {
-                    addLiveNotification(`🔴 مشكلة حرجة جديدة: ${issueData.id}`, `قام العميل ${issueData.client} برفع بلاغ حرج للغاية!`);
-                }
+                attContainer.classList.add('hidden');
             }
 
+            // عرض الـ Timeline الخاص بالتذكرة
+            renderTicketTimeline(item);
+
+            // تفعيل العداد
+            timerSeconds = item.workTime || 0;
+            document.getElementById('timerDisplay').innerText = formatSecondsToHMS(timerSeconds);
+            if (item.status === 'Resolved' || item.status === 'Closed') {
+                document.getElementById('btnStartTimer').classList.add('hidden');
+                document.getElementById('btnStopTimer').classList.add('hidden');
+            } else {
+                document.getElementById('btnStartTimer').classList.add('hidden');
+                document.getElementById('btnStopTimer').classList.remove('hidden');
+            }
+
+            renderCsatStars(item.csat || 5);
+            renderComments(item);
+
+            document.getElementById('detailsModal').classList.remove('hidden');
+            document.getElementById('detailsModal').classList.add('flex');
+        }
+
+        function closeDetailsModal() {
+            document.getElementById('detailsModal').classList.add('hidden');
+            document.getElementById('detailsModal').classList.remove('flex');
+            activeDetailIndex = null;
+        }
+
+        function startWorkTimer() {
+            if (activeDetailIndex === null) return;
+            const item = issues[activeDetailIndex];
+            addTimelineEvent(item, "استئناف العداد", `قام الموظف باستئناف عداد العمل التلقائي.`);
+            document.getElementById('btnStartTimer').classList.add('hidden');
+            document.getElementById('btnStopTimer').classList.remove('hidden');
+            saveToLocalStorage(true);
+            renderTicketTimeline(item);
+        }
+
+        function stopWorkTimer() {
+            if (activeDetailIndex === null) return;
+            const item = issues[activeDetailIndex];
+            addTimelineEvent(item, "إيقاف مؤقت للعداد", `تم إيقاف العداد مؤقتاً عند الوقت ${formatSecondsToHMS(timerSeconds)}.`);
+            document.getElementById('btnStartTimer').classList.remove('hidden');
+            document.getElementById('btnStopTimer').classList.add('hidden');
+            saveToLocalStorage(true);
+            renderTicketTimeline(item);
+            alert("تم إيقاف العداد مؤقتاً لتسجيل استراحة أو مراجعة.");
+        }
+
+        function formatSecondsToHMS(sec) {
+            const h = Math.floor(sec / 3600);
+            const m = Math.floor((sec % 3600) / 60);
+            const s = sec % 60;
+            return [h, m, s].map(v => v < 10 ? "0" + v : v).join(":");
+        }
+
+        function setCsatRating(rating) {
+            if (activeDetailIndex === null) return;
+            const item = issues[activeDetailIndex];
+            item.csat = rating;
+            addTimelineEvent(item, "تقييم العميل (CSAT)", `تم تحديث تقييم رضا العميل إلى (${rating}/5).`);
+            renderCsatStars(rating);
+            saveToLocalStorage(true);
+            renderTicketTimeline(item);
+        }
+
+        function renderCsatStars(val) {
+            const stars = document.getElementById('csatStars').querySelectorAll('i');
+            stars.forEach((star, idx) => {
+                if (idx < val) {
+                    star.className = "fa-solid fa-star text-amber-400 cursor-pointer";
+                } else {
+                    star.className = "fa-regular fa-star text-amber-400 cursor-pointer";
+                }
+            });
+        }
+
+        function renderComments(item) {
+            const container = document.getElementById('commentsList');
+            container.innerHTML = '';
+            if (!item.comments || item.comments.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-400 text-center py-2">لا توجد تعليقات حتى الآن</p>`;
+                return;
+            }
+            item.comments.forEach((c) => {
+                const div = document.createElement('div');
+                div.className = "bg-slate-50 dark:bg-slate-900 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs space-y-1";
+                let attHtml = '';
+                if (c.attachment) {
+                    attHtml = `<div class="mt-1"><a href="${c.attachment.url}" target="_blank" class="text-indigo-500 underline text-[11px]"><i class="fa-solid fa-paperclip"></i> ${c.attachment.name}</a></div>`;
+                }
+                div.innerHTML = `
+                    <div class="flex justify-between text-[10px] text-slate-400 font-bold">
+                        <span>${c.user}</span>
+                        <span>${c.time}</span>
+                    </div>
+                    <p class="text-slate-700 dark:text-slate-200 font-semibold">${c.text}</p>
+                    ${attHtml}
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function addComment() {
+            if (activeDetailIndex === null) return;
+            const input = document.getElementById('newCommentInput');
+            const text = input.value.trim();
+            if (!text && !tempCommentAttachment) { alert("أكتب تعليقاً أو أرفق ملفاً!"); return; }
+
+            const item = issues[activeDetailIndex];
+            if (!item.comments) item.comments = [];
+            const commentObj = {
+                user: currentUser ? currentUser.name : "الدعم الفني",
+                text: text || "مرفق ملف توضيحي",
+                time: new Date().toLocaleString('ar-EG', { dateStyle: 'short', timeStyle: 'short' }),
+                attachment: tempCommentAttachment
+            };
+            item.comments.push(commentObj);
+            
+            // إضافة للتايم لاين أيضاً
+            addTimelineEvent(item, "إضافة تعليق/تحديث", text ? text.substring(0, 45) : "إرفاق ملف تعليق");
+
+            input.value = '';
+            tempCommentAttachment = null;
+            document.getElementById('commentAttachment').value = '';
+            document.getElementById('commentFilePreview').classList.add('hidden');
+
+            renderComments(item);
+            renderTicketTimeline(item);
+            saveToLocalStorage(true);
+        }
+
+        function autoRouteAssignee() {
+            const catName = document.getElementById('issueType').value;
+            const found = categories.find(c => c.name === catName);
+            if (found) {
+                document.getElementById('assignedTo').value = found.assigned;
+                document.getElementById('currentOwner').value = found.owner;
+            }
+        }
+
+        function populateCategoryDropdowns() {
+            const select = document.getElementById('issueType');
+            if (!select) return;
+            const currentVal = select.value;
+            select.innerHTML = '';
+            categories.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.name;
+                opt.innerText = c.name;
+                select.appendChild(opt);
+            });
+            if (currentVal) select.value = currentVal;
+            else autoRouteAssignee();
+            renderCategoriesAdminList();
+        }
+
+        function renderCategoriesAdminList() {
+            const ul = document.getElementById('categoriesList');
+            if (!ul) return;
+            ul.innerHTML = '';
+            categories.forEach((c, idx) => {
+                const li = document.createElement('li');
+                li.className = "py-2 flex justify-between items-center text-xs";
+                li.innerHTML = `
+                    <div>
+                        <span class="font-extrabold text-slate-800 dark:text-slate-100">${c.name}</span>
+                        <span class="block text-[10px] text-slate-400">الإسناد: ${c.assigned} | المسؤول: ${c.owner}</span>
+                    </div>
+                    <button onclick="deleteCategory(${idx})" class="text-rose-500 hover:text-rose-700 text-xs"><i class="fa-solid fa-trash"></i></button>
+                `;
+                ul.appendChild(li);
+            });
+        }
+
+        function addCategory() {
+            const name = document.getElementById('newCategoryInput').value.trim();
+            const assigned = document.getElementById('newCatAssignInput').value.trim();
+            const owner = document.getElementById('newCatOwnerInput').value.trim();
+            if (!name || !assigned || !owner) { alert("أملأ كافة حقول القسم!"); return; }
+            categories.push({ name, assigned, owner });
+            document.getElementById('newCategoryInput').value = '';
+            document.getElementById('newCatAssignInput').value = '';
+            document.getElementById('newCatOwnerInput').value = '';
+            populateCategoryDropdowns();
+            saveToLocalStorage(true);
+            logAuditAction("إضافة قسم", `تم إضافة القسم ${name}`);
+        }
+
+        function deleteCategory(index) {
+            if (categories.length <= 1) { alert("يجب أن يحتوي النظام على قسم واحد على الأقل!"); return; }
+            categories.splice(index, 1);
+            populateCategoryDropdowns();
+            saveToLocalStorage(true);
+        }
+
+        function saveIssue(e) {
+            e.preventDefault();
+            const editIndex = document.getElementById('issueIndex').value;
+            const client = document.getElementById('clientName').value.trim();
+            const tag = document.getElementById('issueTag').value;
+            const type = document.getElementById('issueType').value;
+            const desc = document.getElementById('issueDesc').value.trim();
+            const assigned = document.getElementById('assignedTo').value.trim();
+            const owner = document.getElementById('currentOwner').value.trim();
+            const priority = document.getElementById('priority').value;
+            const status = document.getElementById('status').value;
+            const date = document.getElementById('dateSent').value;
+
+            if (editIndex !== "") {
+                const idx = parseInt(editIndex);
+                const item = issues[idx];
+                const oldStatus = item.status;
+                const oldOwner = item.owner;
+
+                item.client = client;
+                item.tag = tag;
+                item.type = type;
+                item.desc = desc;
+                item.assigned = assigned;
+                item.owner = owner;
+                item.priority = priority;
+                item.status = status;
+                item.date = date;
+                if (tempTicketAttachment) item.attachment = tempTicketAttachment;
+
+                // 📌 تسجيل في Timeline إن تغيرت الحالة أو المسؤول
+                if (oldStatus !== status) {
+                    addTimelineEvent(item, "تغيير حالة التذكرة", `تغيرت من (${oldStatus}) إلى (${status}) بواسطة الموظف.`);
+                }
+                if (oldOwner !== owner) {
+                    addTimelineEvent(item, "تحويل المسؤولية", `تحولت التذكرة من المسؤول (${oldOwner}) إلى (${owner}).`);
+                }
+
+                logAuditAction("تعديل مشكلة", `تم تحديث التذكرة رقم ${item.id}`);
+            } else {
+                const newId = `INC-${1000 + issues.length + 1}`;
+                const newItem = {
+                    id: newId,
+                    client, tag, type, desc, assigned, owner, priority, status, date,
+                    workTime: 0,
+                    csat: 5,
+                    comments: [],
+                    attachment: tempTicketAttachment,
+                    timeline: []
+                };
+                addTimelineEvent(newItem, "إنشاء التذكرة", `أنشئت التذكرة وتم إسنادها إلى ${owner} بالحالة ${status}.`);
+                issues.unshift(newItem);
+                addLiveNotification("مشكلة جديدة مسجلة", `تم تسجيل بلاغ جديد للعميل ${client}`);
+                logAuditAction("إضافة مشكلة", `إضافة التذكرة ${newId} للعميل ${client}`);
+            }
+
+            tempTicketAttachment = null;
             saveToLocalStorage(true);
             closeIssueModal();
             renderAll();
-            checkSlaExceededNotifications();
         }
 
         function editIssue(index) {
-            populateCategoryDropdowns();
             const item = issues[index];
             document.getElementById('issueIndex').value = index;
             document.getElementById('clientName').value = item.client;
-            document.getElementById('issueTag').value = item.tag || 'Software';
             document.getElementById('issueType').value = item.type;
             document.getElementById('issueDesc').value = item.desc;
             document.getElementById('assignedTo').value = item.assigned;
@@ -1624,175 +2013,125 @@
             document.getElementById('priority').value = item.priority;
             document.getElementById('status').value = item.status;
             document.getElementById('dateSent').value = item.date;
+            
+            const tagSel = document.getElementById('issueTag');
+            if (tagSel) tagSel.value = item.tag || tags[0];
 
-            document.getElementById('modalTitle').innerText = 'تعديل بيانات المشكلة (' + item.id + ')';
             document.getElementById('issueModal').classList.remove('hidden');
             document.getElementById('issueModal').classList.add('flex');
         }
 
-        async function deleteIssue(index) {
-            if (!currentUser || currentUser.role !== 'Admin') {
-                alert("عذراً! الحذف مقتصر على الأدمن فقط.");
-                return;
-            }
-            const item = issues[index];
-            if (confirm(`هل أنت تأكد من حذف المشكلة (${item.id}) نهائياً؟`)) {
-                if (supabaseClient) {
-                    try {
-                        await supabaseClient.from('issues').delete().eq('id', item.id);
-                    } catch(e) { console.error("Cloud delete error:", e); }
-                }
-                issues.splice(index, 1);
-                saveToLocalStorage(false);
+        function deleteIssue(index) {
+            if (confirm("هل أنت متأكد من حذف هذه المشكلة نهائياً؟")) {
+                const removed = issues.splice(index, 1);
+                saveToLocalStorage(true);
                 renderAll();
-                checkSlaExceededNotifications();
+                logAuditAction("حذف مشكلة", `حذف التذكرة ${removed[0].id}`);
             }
         }
 
-        function openDetailsModal(index) {
-            activeDetailIndex = index;
+        function openResolveModal(index) {
+            document.getElementById('resolveTicketIndex').value = index;
+            document.getElementById('resolveReasonInput').value = '';
+            document.getElementById('resolveReasonModal').classList.remove('hidden');
+            document.getElementById('resolveReasonModal').classList.add('flex');
+        }
+
+        function closeResolveReasonModal() {
+            document.getElementById('resolveReasonModal').classList.add('hidden');
+            document.getElementById('resolveReasonModal').classList.remove('flex');
+        }
+
+        function confirmResolveTicket() {
+            const index = parseInt(document.getElementById('resolveTicketIndex').value);
+            const reason = document.getElementById('resolveReasonInput').value.trim();
+            if (!reason) { alert("يرجى كتابة سبب الحل/الإغلاق!"); return; }
+
             const item = issues[index];
+            item.status = 'Resolved';
+            if (!item.comments) item.comments = [];
+            item.comments.push({
+                user: currentUser ? currentUser.name : "System",
+                text: `🔒 تم حل وإغلاق التذكرة. السبب: ${reason}`,
+                time: new Date().toLocaleString('ar-EG', { dateStyle: 'short', timeStyle: 'short' })
+            });
 
-            document.getElementById('detailId').innerText = item.id;
-            document.getElementById('detailClient').innerText = item.client;
-            document.getElementById('detailTag').innerText = item.tag || 'General';
-            document.getElementById('detailType').innerText = item.type;
-            document.getElementById('detailPriority').innerText = item.priority;
-            document.getElementById('detailStatus').innerText = item.status;
-            document.getElementById('detailOwner').innerText = item.owner;
-            document.getElementById('detailDesc').innerText = item.desc;
+            addTimelineEvent(item, "إغلاق وحل البلاغ", `تم حل التذكرة بنجاح. السبب المعتمد: ${reason}`);
 
-            const attachContainer = document.getElementById('detailAttachmentContainer');
-            if (item.attachment) {
-                attachContainer.classList.remove('hidden');
-                if (item.attachment.type && item.attachment.type.startsWith('image/')) {
-                    attachContainer.innerHTML = `<p class="text-[10px] text-slate-400 mb-1">صورة مرفقة:</p><img src="${item.attachment.data}" class="max-h-48 rounded-xl border border-slate-300 dark:border-slate-700">`;
-                } else {
-                    attachContainer.innerHTML = `<a href="${item.attachment.data}" download="${item.attachment.name}" class="text-xs text-indigo-500 underline font-bold"><i class="fa-solid fa-paperclip ml-1"></i> تحميل المرفق (${item.attachment.name})</a>`;
-                }
-            } else {
-                attachContainer.classList.add('hidden');
-            }
-
-            timerSeconds = item.workTime || 0;
-            document.getElementById('timerDisplay').innerText = formatSecondsToHMS(timerSeconds);
-            
-            startWorkTimer();
-            setCsatRatingUI(item.csat || 5);
-            renderCommentsList(item.comments || []);
-            document.getElementById('detailsModal').classList.remove('hidden');
-            document.getElementById('detailsModal').classList.add('flex');
-        }
-
-        function closeDetailsModal() {
-            stopWorkTimer();
-            activeDetailIndex = null;
-            document.getElementById('detailsModal').classList.add('hidden');
-            document.getElementById('detailsModal').classList.remove('flex');
-        }
-
-        function startWorkTimer() {
-            if (timerInterval) clearInterval(timerInterval);
-
-            document.getElementById('btnStartTimer').classList.add('hidden');
-            document.getElementById('btnStopTimer').classList.remove('hidden');
-
-            timerInterval = setInterval(() => {
-                if (activeDetailIndex !== null && issues[activeDetailIndex]) {
-                    if (issues[activeDetailIndex].status !== 'Resolved' && issues[activeDetailIndex].status !== 'Closed') {
-                        timerSeconds++;
-                        issues[activeDetailIndex].workTime = timerSeconds;
-                        document.getElementById('timerDisplay').innerText = formatSecondsToHMS(timerSeconds);
-                    }
-                }
-            }, 1000);
-        }
-
-        function stopWorkTimer() {
-            if (timerInterval) clearInterval(timerInterval);
-            document.getElementById('btnStartTimer').classList.remove('hidden');
-            document.getElementById('btnStopTimer').classList.add('hidden');
-
-            if (activeDetailIndex !== null && issues[activeDetailIndex]) {
-                issues[activeDetailIndex].workTime = timerSeconds;
-                saveToLocalStorage(true);
-                renderIssues();
-            }
-        }
-
-        function setCsatRating(rating) {
-            if (activeDetailIndex === null) return;
-            issues[activeDetailIndex].csat = rating;
-            setCsatRatingUI(rating);
             saveToLocalStorage(true);
-            renderDashboard();
+            closeResolveReasonModal();
+            renderAll();
+            logAuditAction("حل تذكرة", `إغلاق التذكرة ${item.id} وإتمام الحل`);
         }
 
-        function setCsatRatingUI(rating) {
-            const starsContainer = document.getElementById('csatStars');
-            if (!starsContainer) return;
-            const stars = starsContainer.querySelectorAll('i');
-            stars.forEach((star, idx) => {
-                if (idx < rating) {
-                    star.className = 'fa-solid fa-star text-amber-400';
-                } else {
-                    star.className = 'fa-regular fa-star text-amber-400';
+        function handleFileUpload(event, typeTarget) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const fileObj = { name: file.name, url: e.target.result };
+                if (typeTarget === 'ticket') {
+                    tempTicketAttachment = fileObj;
+                    const prev = document.getElementById('attachmentPreview');
+                    prev.innerHTML = `<span class="text-xs text-emerald-500 font-bold"><i class="fa-solid fa-check">‌</i> تم إرفاق: ${file.name}</span>`;
+                    prev.classList.remove('hidden');
+                } else if (typeTarget === 'comment') {
+                    tempCommentAttachment = fileObj;
+                    const prev = document.getElementById('commentFilePreview');
+                    prev.innerText = `📎 جاهز للإرسال: ${file.name}`;
+                    prev.classList.remove('hidden');
                 }
-            });
+            };
+            reader.readAsDataURL(file);
         }
 
-        function renderCommentsList(comments) {
-            const list = document.getElementById('commentsList');
-            list.innerHTML = '';
-            if (!comments || comments.length === 0) {
-                list.innerHTML = '<p class="text-xs text-slate-400 text-center py-2">لا توجد تعليقات أو تحديثات سابقة</p>';
-                return;
+        function toggleSelectAll(checkbox) {
+            const checkboxes = document.querySelectorAll('.issue-checkbox');
+            checkboxes.forEach(cb => { cb.checked = checkbox.checked; });
+            updateBulkActionsVisibility();
+        }
+
+        function updateBulkActionsVisibility() {
+            const checked = document.querySelectorAll('.issue-checkbox:checked');
+            const wrapper = document.getElementById('bulkActionsWrapper');
+            const countSpan = document.getElementById('selectedCount');
+            if (checked.length > 0) {
+                wrapper.classList.remove('hidden');
+                countSpan.innerText = `${checked.length} محدد`;
+            } else {
+                wrapper.classList.add('hidden');
             }
-
-            comments.forEach(c => {
-                const div = document.createElement('div');
-                div.className = "bg-slate-50 dark:bg-slate-900 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs space-y-1";
-
-                let attachHtml = '';
-                if (c.attachment) {
-                    attachHtml = `<div class="mt-1"><a href="${c.attachment.data}" download="${c.attachment.name}" class="text-[10px] text-indigo-500 font-bold underline"><i class="fa-solid fa-paperclip ml-0.5"></i> ${c.attachment.name}</a></div>`;
-                }
-
-                div.innerHTML = `
-                    <div class="flex justify-between font-bold text-slate-700 dark:text-slate-300">
-                        <span class="text-indigo-600 dark:text-indigo-400">${c.user}</span>
-                        <span class="text-[10px] text-slate-400 font-normal">${c.time}</span>
-                    </div>
-                    <p class="text-slate-600 dark:text-slate-300 leading-relaxed">${c.text}</p>
-                    ${attachHtml}
-                `;
-                list.appendChild(div);
-            });
         }
 
-        function addComment() {
-            const input = document.getElementById('newCommentInput');
-            const text = input.value.trim();
-            if (!text && !tempCommentAttachment) return;
+        function getSelectedIndices() {
+            const checkboxes = document.querySelectorAll('.issue-checkbox:checked');
+            return Array.from(checkboxes).map(cb => parseInt(cb.dataset.index));
+        }
 
-            if (activeDetailIndex !== null && issues[activeDetailIndex]) {
-                const commentObj = {
-                    user: currentUser ? currentUser.name : "مستخدم",
-                    text: text || "قام برفع مرفق جديد",
-                    time: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
-                    attachment: tempCommentAttachment
-                };
-
-                if (!issues[activeDetailIndex].comments) issues[activeDetailIndex].comments = [];
-                issues[activeDetailIndex].comments.push(commentObj);
-
-                input.value = '';
-                tempCommentAttachment = null;
-                document.getElementById('commentFilePreview').classList.add('hidden');
-                document.getElementById('commentAttachment').value = '';
-
+        function bulkChangeStatus(newStatus) {
+            const indices = getSelectedIndices();
+            if (indices.length === 0) return;
+            if (confirm(`هل أنت متأكد من تحويل الحالة إلى (${newStatus}) للمحدد؟`)) {
+                indices.forEach(idx => {
+                    const item = issues[idx];
+                    if (item) {
+                        const oldStatus = item.status;
+                        item.status = newStatus;
+                        addTimelineEvent(item, "تحديث جماعي للحالة", `تغيرت من (${oldStatus}) إلى (${newStatus}).`);
+                    }
+                });
                 saveToLocalStorage(true);
-                renderCommentsList(issues[activeDetailIndex].comments);
+                renderAll();
+            }
+        }
+
+        function bulkDelete() {
+            const indices = getSelectedIndices().sort((a,b) => b-a);
+            if (indices.length === 0) return;
+            if (confirm(`هل أنت متأكد من حذف (${indices.length}) تذكرة محددة؟`)) {
+                indices.forEach(idx => { issues.splice(idx, 1); });
+                saveToLocalStorage(true);
+                renderAll();
             }
         }
 
@@ -1800,110 +2139,129 @@
             window.print();
         }
 
-        function toggleSelectAll(master) {
-            const checkboxes = document.querySelectorAll('.issue-checkbox');
-            checkboxes.forEach(cb => cb.checked = master.checked);
-            updateBulkBar();
-        }
-
-        function updateBulkBar() {
-            const selected = document.querySelectorAll('.issue-checkbox:checked');
-            const wrapper = document.getElementById('bulkActionsWrapper');
-            const countSpan = document.getElementById('selectedCount');
-
-            if (selected.length > 0) {
-                wrapper.classList.remove('hidden');
-                countSpan.innerText = `${selected.length} محدد`;
-            } else {
-                wrapper.classList.add('hidden');
-            }
-        }
-
-        function bulkChangeStatus(newStatus) {
-            const selected = document.querySelectorAll('.issue-checkbox:checked');
-            selected.forEach(cb => {
-                const idx = cb.value;
-                if (issues[idx]) {
-                    issues[idx].status = newStatus;
-                }
-            });
-            saveToLocalStorage(true);
-            renderAll();
-            updateBulkBar();
-            checkSlaExceededNotifications();
-        }
-
-        async function bulkDelete() {
-            if (!currentUser || currentUser.role !== 'Admin') {
-                alert("عذراً! الحذف مقتصر فقط على المديرين.");
-                return;
-            }
-            const selected = document.querySelectorAll('.issue-checkbox:checked');
-            if (confirm(`هل أنت تأكد من حذف (${selected.length}) تذكرة محددة؟`)) {
-                const indices = Array.from(selected).map(cb => parseInt(cb.value)).sort((a,b) => b - a);
-                for (let idx of indices) {
-                    const item = issues[idx];
-                    if (supabaseClient && item) {
-                        try {
-                            await supabaseClient.from('issues').delete().eq('id', item.id);
-                        } catch(e) { console.error("Cloud bulk delete error:", e); }
-                    }
-                    issues.splice(idx, 1);
-                }
-                saveToLocalStorage(false);
-                renderAll();
-                updateBulkBar();
-                checkSlaExceededNotifications();
-            }
-        }
-
-        function switchAdminSubTab(subtab) {
-            const tabs = ['users', 'reports', 'categories', 'supabase', 'csat', 'audit'];
-            tabs.forEach(t => {
-                const el = document.getElementById(`admin-${t}`);
-                const btn = document.getElementById(`subtab-btn-${t}`);
-                if (el) el.classList.add('hidden');
-                if (btn) btn.className = "pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200";
-            });
-
-            const activeEl = document.getElementById(`admin-${subtab}`);
-            const activeBtn = document.getElementById(`subtab-btn-${subtab}`);
-            if (activeEl) activeEl.classList.remove('hidden');
-            if (activeBtn) activeBtn.className = "pb-3 border-b-2 border-indigo-600 text-indigo-600 dark:text-indigo-400";
-
-            if (subtab === 'users') renderUsersTable();
-            if (subtab === 'categories') renderCategoriesList();
-            if (subtab === 'csat') renderCsatList();
-            if (subtab === 'audit') renderAuditLogs();
-        }
-
-        function renderAdmin() {
+        function renderAll() {
+            renderDashboard();
+            renderIssues();
             renderUsersTable();
-            renderCategoriesList();
-            renderCsatList();
             renderAuditLogs();
-            document.getElementById('slaCritical').value = defaultSlaRules.Critical;
-            document.getElementById('slaHigh').value = defaultSlaRules.High;
-            document.getElementById('slaMedium').value = defaultSlaRules.Medium;
-            document.getElementById('slaLow').value = defaultSlaRules.Low;
+            renderCsatReportList();
+        }
+
+        function renderDashboard() {
+            const total = issues.length;
+            const openCount = issues.filter(i => i.status === 'Open').length;
+            const pendingCount = issues.filter(i => i.status === 'Pending').length;
+            const breachedCount = issues.filter(i => isSlaBreached(i)).length;
+
+            const totalCsat = issues.reduce((acc, curr) => acc + (curr.csat || 5), 0);
+            const avgCsat = total > 0 ? (totalCsat / total).toFixed(1) : '4.8';
+
+            document.getElementById('kpi-total').innerText = total;
+            document.getElementById('kpi-open').innerText = openCount;
+            document.getElementById('kpi-pending').innerText = pendingCount;
+            document.getElementById('kpi-sla-breach').innerText = breachedCount;
+            document.getElementById('kpi-csat').innerText = avgCsat;
+
+            const statusCounts = { 'Open': openCount, 'Pending': pendingCount, 'Resolved': issues.filter(i=>i.status==='Resolved').length, 'Closed': issues.filter(i=>i.status==='Closed').length };
+            const priorityCounts = { 'Critical': issues.filter(i=>i.priority.includes('Critical')).length, 'High': issues.filter(i=>i.priority.includes('High')).length, 'Medium': issues.filter(i=>i.priority.includes('Medium')).length, 'Low': issues.filter(i=>i.priority.includes('Low')).length };
+            
+            const categoryCounts = {};
+            categories.forEach(c => { categoryCounts[c.name] = issues.filter(i=>i.type===c.name).length; });
+
+            renderChart('statusChart', statusChartInstance, 'pie', ['Open', 'Pending', 'Resolved', 'Closed'], Object.values(statusCounts), ['#e11d48', '#d97706', '#10b981', '#64748b'], (inst) => { statusChartInstance = inst; });
+            renderChart('priorityChart', priorityChartInstance, 'bar', ['Critical', 'High', 'Medium', 'Low'], Object.values(priorityCounts), ['#e11d48', '#ea580c', '#ca8a04', '#16a34a'], (inst) => { priorityChartInstance = inst; });
+            renderChart('categoryChart', categoryChartInstance, 'doughnut', Object.keys(categoryCounts), Object.values(categoryCounts), ['#6366f1', '#06b6d4', '#8b5cf6', '#ec4899'], (inst) => { categoryChartInstance = inst; });
+        }
+
+        function renderChart(canvasId, instance, type, labels, data, colors, setInstanceCallback) {
+            const ctx = document.getElementById(canvasId);
+            if (!ctx) return;
+            if (instance) instance.destroy();
+            const newInst = new Chart(ctx, {
+                type: type,
+                data: {
+                    labels: labels,
+                    datasets: [{ data: data, backgroundColor: colors, borderWidth: 1 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { family: 'Cairo', size: 10 } } } } }
+            });
+            setInstanceCallback(newInst);
+        }
+
+        function renderIssues() {
+            const tbody = document.getElementById('issuesTableBody');
+            if (!tbody) return;
+            const search = document.getElementById('searchInput') ? document.getElementById('searchInput').value.toLowerCase() : '';
+            const tagFilter = document.getElementById('filterTag') ? document.getElementById('filterTag').value : 'ALL';
+            const statusFilter = document.getElementById('filterStatus') ? document.getElementById('filterStatus').value : 'ALL';
+            const priorityFilter = document.getElementById('filterPriority') ? document.getElementById('filterPriority').value : 'ALL';
+
+            tbody.innerHTML = '';
+            issues.forEach((item, index) => {
+                const breached = isSlaBreached(item);
+                if (statusFilter === 'Breached' && !breached) return;
+                else if (statusFilter !== 'ALL' && statusFilter !== 'Breached' && item.status !== statusFilter) return;
+
+                if (tagFilter !== 'ALL' && item.tag !== tagFilter) return;
+                if (priorityFilter !== 'ALL' && !item.priority.includes(priorityFilter.replace(/🔴|🟠|🟡|🟢/g, '').trim())) {
+                    if (item.priority !== priorityFilter) return;
+                }
+
+                if (search && !item.client.toLowerCase().includes(search) && !item.id.toLowerCase().includes(search) && !(item.tag||'').toLowerCase().includes(search) && !item.owner.toLowerCase().includes(search)) return;
+
+                const tr = document.createElement('tr');
+                tr.className = breached ? 'bg-rose-50/70 dark:bg-rose-950/20 hover:bg-rose-100/50 transition' : 'hover:bg-slate-50 dark:hover:bg-slate-700/40 transition';
+                
+                let statusBadge = '';
+                if(item.status === 'Open') statusBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 font-bold">Open 🔴</span>';
+                else if(item.status === 'Pending') statusBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300 font-bold">Pending 🟠</span>';
+                else if(item.status === 'Resolved') statusBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 font-bold">Resolved 🟢</span>';
+                else statusBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300 font-bold">Closed ⚪</span>';
+
+                tr.innerHTML = `
+                    <td class="p-3 text-center"><input type="checkbox" class="issue-checkbox rounded text-indigo-600 focus:ring-indigo-500" data-index="${index}" onchange="updateBulkActionsVisibility()"></td>
+                    <td class="p-3 font-mono font-bold text-indigo-600 dark:text-indigo-400 cursor-pointer" onclick="openDetailsModal(${index})">${item.id}</td>
+                    <td class="p-3">
+                        <span class="font-bold block">${item.client}</span>
+                        <span class="text-[10px] text-amber-600 dark:text-amber-400 font-semibold"><i class="fa-solid fa-tag"></i> ${item.tag || 'عام'}</span>
+                    </td>
+                    <td class="p-3 text-slate-600 dark:text-slate-300">${item.type}</td>
+                    <td class="p-3 max-w-xs truncate text-slate-500">${item.desc}</td>
+                    <td class="p-3 text-slate-600 dark:text-slate-300">${item.assigned}</td>
+                    <td class="p-3 font-bold text-amber-600 dark:text-amber-400">${item.owner}</td>
+                    <td class="p-3 font-mono font-bold text-slate-700 dark:text-slate-300"><i class="fa-solid fa-clock ml-1 text-[10px]"></i>${formatSecondsToHMS(item.workTime || 0)}</td>
+                    <td class="p-3 font-bold">${item.priority}</td>
+                    <td class="p-3">${statusBadge}</td>
+                    <td class="p-3 font-mono text-[11px] ${breached ? 'text-rose-600 font-black animate-pulse' : 'text-slate-400'}">
+                        ${breached ? '⚠️ متأخرة SLA' : item.date}
+                    </td>
+                    <td class="p-3 text-center">
+                        <div class="flex items-center justify-center gap-1.5">
+                            <button onclick="openDetailsModal(${index})" class="p-1.5 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950 rounded-lg transition" title="فتح التفاصيل والتايم لاين"><i class="fa-solid fa-eye text-sm"></i></button>
+                            <button onclick="editIssue(${index})" class="p-1.5 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950 rounded-lg transition" title="تعديل"><i class="fa-solid fa-pen text-sm"></i></button>
+                            ${item.status !== 'Resolved' && item.status !== 'Closed' ? `<button onclick="openResolveModal(${index})" class="p-1.5 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950 rounded-lg transition" title="حل وإغلاق"><i class="fa-solid fa-check text-sm"></i></button>` : ''}
+                            <button onclick="deleteIssue(${index})" class="p-1.5 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950 rounded-lg transition" title="حذف"><i class="fa-solid fa-trash text-sm"></i></button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
         }
 
         function renderUsersTable() {
             const tbody = document.getElementById('usersTableBody');
-            if(!tbody) return;
+            if (!tbody) return;
             tbody.innerHTML = '';
-            users.forEach((u, index) => {
+            users.forEach((u, idx) => {
                 const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-50 dark:hover:bg-slate-700/50";
                 tr.innerHTML = `
-                    <td class="p-3 font-bold text-slate-800 dark:text-slate-100">${u.name}</td>
-                    <td class="p-3 font-mono text-indigo-600 dark:text-indigo-400 font-bold">${u.username}</td>
-                    <td class="p-3 font-mono text-slate-400">••••••••</td>
+                    <td class="p-3 font-bold">${u.name}</td>
+                    <td class="p-3 font-mono">${u.username}</td>
+                    <td class="p-3 font-mono text-slate-400">••••••</td>
                     <td class="p-3 text-slate-500">${u.email}</td>
-                    <td class="p-3"><span class="bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded text-xs font-bold">${u.role}</span></td>
-                    <td class="p-3 text-center space-x-1 space-x-reverse">
-                        <button onclick="editUser(${index})" class="text-amber-500 hover:text-amber-700 p-1"><i class="fa-solid fa-pen-to-square"></i></button>
-                        <button onclick="deleteUser(${index})" class="text-rose-500 hover:text-rose-700 p-1"><i class="fa-solid fa-trash"></i></button>
+                    <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] ${u.role === 'Admin' ? 'bg-amber-100 text-amber-800' : 'bg-indigo-100 text-indigo-800'} font-bold">${u.role}</span></td>
+                    <td class="p-3 text-center">
+                        <button onclick="deleteUser(${idx})" class="text-rose-500 hover:text-rose-700 text-xs"><i class="fa-solid fa-trash"></i></button>
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -1912,8 +2270,6 @@
 
         function openUserModal() {
             document.getElementById('userForm').reset();
-            document.getElementById('userEditIndex').value = '';
-            document.getElementById('userModalTitle').innerText = 'إنشاء حساب مستخدم جديد';
             document.getElementById('userModal').classList.remove('hidden');
             document.getElementById('userModal').classList.add('flex');
         }
@@ -1923,117 +2279,87 @@
             document.getElementById('userModal').classList.remove('flex');
         }
 
-        async function saveUser(e) {
+        function saveUser(e) {
             e.preventDefault();
-            const index = document.getElementById('userEditIndex').value;
-            const uData = {
-                name: document.getElementById('addUserName').value.trim(),
-                username: document.getElementById('addUserUsername').value.trim(),
-                password: document.getElementById('addUserPassword').value.trim(),
-                email: document.getElementById('addUserEmail').value.trim(),
-                role: document.getElementById('addUserRole').value
-            };
+            const name = document.getElementById('addUserName').value.trim();
+            const username = document.getElementById('addUserUsername').value.trim();
+            const password = document.getElementById('addUserPassword').value.trim();
+            const email = document.getElementById('addUserEmail').value.trim();
+            const role = document.getElementById('addUserRole').value;
 
-            if (index !== '') {
-                users[index] = uData;
-            } else {
-                users.push(uData);
-            }
-
-            saveToLocalStorage(false);
+            users.push({ name, username, password, email, role });
+            saveToLocalStorage(true);
             closeUserModal();
             renderUsersTable();
-
-            if (supabaseClient) {
-                try {
-                    const { error } = await supabaseClient.from('users').upsert([uData], { onConflict: 'username' });
-                    if (error) console.error("User Cloud Save Error:", error);
-                    else logAuditAction("حفظ مستخدم", `تمت مزامنة المستخدم ${uData.username} سحابياً`);
-                } catch(err) { console.error(err); }
-            }
+            logAuditAction("إضافة مستخدم", `إضافة المستخدم ${username}`);
         }
 
-        function editUser(index) {
-            const u = users[index];
-            document.getElementById('userEditIndex').value = index;
-            document.getElementById('addUserName').value = u.name;
-            document.getElementById('addUserUsername').value = u.username;
-            document.getElementById('addUserPassword').value = u.password;
-            document.getElementById('addUserEmail').value = u.email;
-            document.getElementById('addUserRole').value = u.role;
-
-            document.getElementById('userModalTitle').innerText = 'تعديل بيانات الحساب';
-            document.getElementById('userModal').classList.remove('hidden');
-            document.getElementById('userModal').classList.add('flex');
-        }
-
-        async function deleteUser(index) {
-            if (users.length <= 1) {
-                alert("لا يمكن حذف آخر حساب إدمن بالنظام!");
-                return;
-            }
-            const targetUser = users[index];
-            if (confirm("هل أنت تأكد من حذف هذا الحساب؟")) {
-                if (supabaseClient) {
-                    try {
-                        await supabaseClient.from('users').delete().eq('username', targetUser.username);
-                    } catch(e) { console.error("User Cloud Delete Error:", e); }
-                }
-                users.splice(index, 1);
-                saveToLocalStorage(false);
-                renderUsersTable();
-            }
-        }
-
-        function addCategory() {
-            const name = document.getElementById('newCategoryInput').value.trim();
-            const assigned = document.getElementById('newCatAssignInput').value.trim();
-            const owner = document.getElementById('newCatOwnerInput').value.trim();
-
-            if (!name || !assigned || !owner) {
-                alert("يرجى ملء جميع الحقول للقسم والتعيين التلقائي!");
-                return;
-            }
-
-            categories.push({ name, assigned, owner });
-            document.getElementById('newCategoryInput').value = '';
-            document.getElementById('newCatAssignInput').value = '';
-            document.getElementById('newCatOwnerInput').value = '';
-
+        function deleteUser(idx) {
+            if (users.length <= 1) { alert("يجب وجود مستخدم إدمن واحد على الأقل!"); return; }
+            users.splice(idx, 1);
             saveToLocalStorage(true);
-            renderCategoriesList();
-            populateCategoryDropdowns();
+            renderUsersTable();
         }
 
-        function deleteCategory(index) {
-            if (categories.length <= 1) {
-                alert("يجب أن يتبقى قسم واحد على الأقل بالنظام!");
+        function renderCsatReportList() {
+            const container = document.getElementById('csatList');
+            if (!container) return;
+            container.innerHTML = '';
+            const resolvedOrClosed = issues.filter(i => i.status === 'Resolved' || i.status === 'Closed');
+            if (resolvedOrClosed.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-400">لا توجد تقييمات تذاكر مغلقة أو محلولة حتى الآن.</p>`;
                 return;
             }
-            if (confirm("هل أنت تأكد من حذف هذا القسم؟")) {
-                categories.splice(index, 1);
-                saveToLocalStorage(true);
-                renderCategoriesList();
-                populateCategoryDropdowns();
-            }
+            resolvedOrClosed.forEach(item => {
+                const div = document.createElement('div');
+                div.className = "flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-semibold";
+                let starsStr = '';
+                const rating = item.csat || 5;
+                for(let i=0; i<5; i++) starsStr += (i < rating) ? '⭐' : '☆';
+                div.innerHTML = `
+                    <div>
+                        <span class="font-bold text-slate-800 dark:text-slate-100">${item.id} - ${item.client}</span>
+                        <span class="block text-[10px] text-slate-400">المسؤول: ${item.owner}</span>
+                    </div>
+                    <div class="text-amber-500 font-black">${starsStr} (${rating}/5)</div>
+                `;
+                container.appendChild(div);
+            });
         }
 
-        function renderCategoriesList() {
-            const list = document.getElementById('categoriesList');
-            if(!list) return;
-            list.innerHTML = '';
-            categories.forEach((cat, idx) => {
-                const li = document.createElement('li');
-                li.className = "py-2 flex justify-between items-center";
-                li.innerHTML = `
-                    <div>
-                        <span class="font-bold text-slate-800 dark:text-slate-100">${cat.name}</span>
-                        <p class="text-[10px] text-slate-400">فريق: ${cat.assigned} | مسؤول: ${cat.owner}</p>
-                    </div>
-                    <button onclick="deleteCategory(${idx})" class="text-rose-500 hover:text-rose-700 text-xs"><i class="fa-solid fa-trash"></i></button>
+        function renderAuditLogs() {
+            const tbody = document.getElementById('auditLogsBody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            auditLogs.forEach(log => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="p-2 font-mono text-slate-400">${log.time}</td>
+                    <td class="p-2 font-bold">${log.user}</td>
+                    <td class="p-2 text-indigo-600 dark:text-indigo-400 font-semibold">${log.action}</td>
+                    <td class="p-2 text-slate-600 dark:text-slate-300">${log.details}</td>
                 `;
-                list.appendChild(li);
+                tbody.appendChild(tr);
             });
+        }
+
+        function logAuditAction(action, details) {
+            auditLogs.unshift({
+                time: new Date().toLocaleString('ar-EG', { dateStyle: 'short', timeStyle: 'medium' }),
+                user: currentUser ? currentUser.name : "System",
+                action: action,
+                details: details
+            });
+            if (auditLogs.length > 100) auditLogs.pop();
+            renderAuditLogs();
+        }
+
+        function clearAuditLogs() {
+            if (confirm("هل تريد مسح سجل العمليات Audit Trail؟")) {
+                auditLogs = [];
+                renderAuditLogs();
+                saveToLocalStorage(false);
+            }
         }
 
         function saveSlaRules() {
@@ -2041,41 +2367,9 @@
             defaultSlaRules.High = parseInt(document.getElementById('slaHigh').value) || 12;
             defaultSlaRules.Medium = parseInt(document.getElementById('slaMedium').value) || 24;
             defaultSlaRules.Low = parseInt(document.getElementById('slaLow').value) || 48;
-
             saveToLocalStorage(true);
-            renderIssues();
-            checkSlaExceededNotifications();
-            alert("تم حفظ قواعد SLA المحدثة بنجاح ومزامنتها سحابياً!");
-        }
-
-        function renderCsatList() {
-            const container = document.getElementById('csatList');
-            if(!container) return;
-            container.innerHTML = '';
-
-            const rated = issues.filter(i => i.csat);
-            if (rated.length === 0) {
-                container.innerHTML = '<p class="text-xs text-slate-400 text-center py-4">لا توجد تقييمات مسجلة بعد</p>';
-                return;
-            }
-
-            rated.forEach(item => {
-                let stars = '';
-                for(let i=1; i<=5; i++) {
-                    stars += i <= item.csat ? '<i class="fa-solid fa-star text-amber-400"></i>' : '<i class="fa-regular fa-star text-amber-400"></i>';
-                }
-
-                const div = document.createElement('div');
-                div.className = "bg-slate-50 dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-700 flex justify-between items-center text-xs";
-                div.innerHTML = `
-                    <div>
-                        <span class="font-bold text-indigo-500">${item.id}</span> - <span class="font-extrabold">${item.client}</span>
-                        <p class="text-[10px] text-slate-400">المسؤول: ${item.owner}</p>
-                    </div>
-                    <div class="flex items-center gap-1 text-sm">${stars} <span class="font-bold mr-1 text-slate-600 dark:text-slate-300">(${item.csat}.0)</span></div>
-                `;
-                container.appendChild(div);
-            });
+            alert("تم حفظ قواعد SLA الجديدة بنجاح!");
+            logAuditAction("تعديل SLA", "تم تعديل ساعات الاتفاقية للخدمة");
         }
     </script>
 </body>
