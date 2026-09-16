@@ -766,7 +766,12 @@
     <script>
         const STORAGE_KEY = 'ENTERPRISE_ISSUE_TRACKER_V6_SUPABASE';
 
-        let supabaseConfig = { url: '', key: '' };
+        // بيانات Supabase الافتراضية
+        let supabaseConfig = { 
+            url: 'https://your-project-id.supabase.co', // ضع رابط مشروعك هنا
+            key: 'eyJhbGciOiJIUzI1Ni...'                  // ضع مفتاح الـ Anon Key هنا
+        };
+
         let supabaseClient = null;
 
         let defaultSlaRules = { Critical: 4, High: 12, Medium: 24, Low: 48 };
@@ -882,7 +887,11 @@
                     if (parsed.notifications) notifications = parsed.notifications;
                     if (parsed.slaRules) defaultSlaRules = parsed.slaRules;
                     if (parsed.currentUser) currentUser = parsed.currentUser;
-                    if (parsed.supabaseConfig) supabaseConfig = parsed.supabaseConfig;
+                    
+                    // الاعتماد على بيانات Supabase المحفوظة فقط في حال وجود قيم بها
+                    if (parsed.supabaseConfig && parsed.supabaseConfig.url && parsed.supabaseConfig.key) {
+                        supabaseConfig = parsed.supabaseConfig;
+                    }
                 } catch(e) { console.error("LocalStorage parse error", e); }
             }
         }
